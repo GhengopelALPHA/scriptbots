@@ -301,13 +301,12 @@ void Agent::writeIfKilled(const char * cause)
 "Killed by Suffocation ."			World.cpp	~ln 632	Note: the space is for easy interpretation by Excel with text->data delimitation via spaces
 "Killed by Excessive Generosity"	World.cpp	~ln 658
 "Killed by a Collision"				World.cpp	~ln 687-9
-"Killed by a Stabbing"				World.cpp	~ln 754 Note: death by spike
-"Killed by a Chomping"				World.cpp	~ln 797 Note: death by jaws
+"Killed by a Murder"				World.cpp	~ln 754 Note: death by both spike and jaws
 "Killed by Natural Causes"			World.cpp	~ln 808	Note: contains wheel loss, aging, metabolism, boost penalty, and brain use
 "Killed by Temp Discomfort"			World.cpp	~ln 816
 "Killed by LackOf Oxygen"			World.cpp	~ln 821
 "Killed by God (you)"				World.cpp	~ln 927
-"Killed by Child Birth"				World.cpp	~ln 1069
+"Killed by Child Birth" 			World.cpp	~ln 1069
 */
 {
 	if(this->health<0){
