@@ -4,6 +4,7 @@
 #include "View.h"
 #include "Agent.h"
 #include "settings.h"
+//#include "ReadWrite.h"
 #include <vector>
 class World
 {
@@ -13,6 +14,7 @@ public:
     
     void update();
     void reset();
+	void spawn();
     
     void draw(View* view, int layer);
     
@@ -25,27 +27,36 @@ public:
 	std::vector<Vector2f> linesA;
 	std::vector<Vector2f> linesB;
 
-    int getHerbivores() const;
-	int getCarnivores() const;
-	int getFrugivores() const;
-    int getAgents() const;
-	int getHybrids() const;
-	int getSpiked() const;
-	int getFood() const;
-	int getMeat() const;
-	int getHazards() const;
+	//following and selected agent stuff
+	void positionOfInterest(int type, float &xi, float &yi);
+
+	int getSelection() const;
+
+	int pinput1;
+	float pleft;
+	float pright;
+	bool pcontrol;
+	void setControl(bool state);
+
+	void setSelection(int type);
+	void setSelectedAgent(int id = -1);
+	int getSelectedAgent() const;
+	void selectedHeal();
+	void selectedKill();
+	void selectedBabys();
+	void getFollowLocation(float &xi, float &yi);
+
+	bool isAutoselecting() const;
+	void setAutoselect(bool state);
 
     int epoch() const;
     
     //mouse interaction
-    void processMouse(int button, int state, int x, int y);
+    bool processMouse(int button, int state, int x, int y, float scale);
 
-    void addCarnivore();
-    void addHerbivore();
-	void addRandomBots(int num, int type=0);
+	void addAgents(int num, int set_stomach=-1, float nx=-1, float ny=-1, bool set_lungs=true);
     
-    void positionOfInterest(int type, float &xi, float &yi);
-    
+	//graph stuff
     int numHerbivore[conf::RECORD_SIZE];
 	int numCarnivore[conf::RECORD_SIZE];
 	int numFrugivore[conf::RECORD_SIZE]; 
@@ -53,43 +64,54 @@ public:
 	int numTotal[conf::RECORD_SIZE];
     int ptr;
 
-	int deleting;
-	int pinput1;
-	float pleft;
-	float pright;
-	bool pcontrol;
-	void setControl(bool state);
-
+	//counters
 	int modcounter;
     int current_epoch;
     int idcounter;
 
+	//the agents!
 	std::vector<Agent> agents;
-
-	//cells; replaces food layer, can be expanded (4 layers currently)
-	//[LAYER]: #0= plant food, #1= meat, #2= hazard (poison, waste, events), #3= fruit, #4= land/water
-	//(light, chemical layers also possible with very little coding)
-	int CW;
-	int CH;
-	int cx;
-	int cy;
-	float cells[LAYERS][conf::WIDTH/conf::CZ][conf::HEIGHT/conf::CZ]; //[LAYER][CELL_X][CELL_Y]
 
 	void setInputs();
 	void brainsTick();  //takes in[] to out[] for every agent
     void processOutputs();
+
+	void healthTick();
+
+	std::vector<const char *> deaths; //record of all the causes of death this epoch
+
+	//helper functions to give us counts of agents and cells
+    int getHerbivores() const;
+	int getCarnivores() const;
+	int getFrugivores() const;
+	int getLungLand() const;
+	int getLungWater() const;
+    int getAgents() const;
+	int getHybrids() const;
+	int getSpiked() const;
+	int getFood() const;
+	int getFruit() const;
+	int getMeat() const;
+	int getHazards() const;
+
+	//cells; replaces food layer, can be expanded (4 layers currently)
+	//[LAYER] represents current layer, see settings.h for ordering
+	int CW;
+	int CH;
+	float cells[Layer::LAYERS][conf::WIDTH/conf::CZ][conf::HEIGHT/conf::CZ]; //[LAYER][CELL_X][CELL_Y]
     
 private:
     void writeReport();
     
-    void reproduce(int ai, int bi, float aMR, float aMR2, float bMR, float bMR2);
+    void reproduce(int ai, int bi);
 
 	void cellsRandomFill(int layer, float amount, int number);
-	void cellsLandMasses(int layer);
-	float capCell(float a, float top) const;
+	void cellsLandMasses();
 
     bool CLOSED; //if environment is closed, then no random bots or food are added per time interval
 	bool DEBUG; //if debugging, collect additional data, print more feedback, and draw extra info
+	bool AUTOSELECT; //if autoselecting, the agent which we are newly following gets selected
+	int SELECTION; //id of selected agent
 };
 
 #endif // WORLD_H

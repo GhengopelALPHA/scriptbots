@@ -15,9 +15,11 @@ public:
     std::vector<float> w; //weight of each connecting box
     std::vector<int> id; //id in boxes[] of the connecting box
     std::vector<int> type; //0: regular synapse. 1: change-sensitive synapse. 2: memory trigger synapse
+
+	int seed; //number of successes (reproduction events) this box has experienced whilst unmodified
     float kp; //damper
     float gw; //global w
-    float bias;
+    float bias; //base number
 
     //state variables
     float target; //target value this node is going toward
