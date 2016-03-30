@@ -69,7 +69,7 @@
 				AssemblerListingLocation="Debug"
 				ObjectFile="$(IntDir)\"
 				ProgramDataBaseFileName="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug/scriptbots.pdb"
-				WarningLevel="4"
+				WarningLevel="3"
 				DebugInformationFormat="3"
 				CompileAs="2"
 			/>
@@ -88,11 +88,11 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="false"
 				AdditionalOptions=" /STACK:10000000 /machine:X86 /debug"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib opengl32.lib glui32d.lib glut32.lib glu32.lib $(NOINHERIT)"
+				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib opengl32.lib glui32.lib glut32.lib glu32.lib $(NOINHERIT)"
 				OutputFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug\scriptbots.exe"
 				Version="0.0"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories="./lib"
+				AdditionalLibraryDirectories=""
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -160,24 +160,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions=" /Zm1000 /openmp"
-				Optimization="3"
-				InlineFunctionExpansion="0"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				EnableFiberSafeOptimizations="true"
-				WholeProgramOptimization="true"
+				Optimization="2"
+				InlineFunctionExpansion="2"
 				AdditionalIncludeDirectories="&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c&quot;;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\&quot;Release\&quot;"
 				ExceptionHandling="1"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
-				OpenMP="true"
 				AssemblerListingLocation="Release"
 				ObjectFile="$(IntDir)\"
 				ProgramDataBaseFileName="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Release/scriptbots.pdb"
-				WarningLevel="4"
+				WarningLevel="3"
 				CompileAs="2"
 			/>
 			<Tool
@@ -195,18 +188,13 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="false"
 				AdditionalOptions=" /STACK:10000000 /machine:X86"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib glui32.lib glui32d.lib glut32.lib glu32.lib opengl32.lib LIBCMT.lib $(NOINHERIT)"
+				AdditionalDependencies="$(NOINHERIT) kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib  glut.lib glut32.lib "
 				OutputFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Release\scriptbots.exe"
 				Version="0.0"
-				LinkIncremental="0"
-				AdditionalLibraryDirectories="./lib"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="/NODEFAULTLIB:MSVCRT;msvcprt;MSVCP90"
-				DelayLoadDLLs=""
-				GenerateDebugInformation="false"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories=""
 				ProgramDatabaseFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Release/scriptbots.pdb"
 				SubSystem="1"
-				LinkTimeCodeGeneration="1"
 				ImportLibrary="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Release\scriptbots.lib"
 			/>
 			<Tool
@@ -393,125 +381,15 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="false"
 				AdditionalOptions=" /STACK:10000000 /machine:X86 /debug"
-				AdditionalDependencies="$(NOINHERIT) kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib  glut.lib glui32.lib glut32.lib "
+				AdditionalDependencies="$(NOINHERIT) kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib  glut.lib glut32.lib "
 				OutputFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\RelWithDebInfo\scriptbots.exe"
 				Version="0.0"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="/NODEFAULTLIB:[MSVCRTD]"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\RelWithDebInfo/scriptbots.pdb"
 				SubSystem="1"
 				ImportLibrary="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\RelWithDebInfo\scriptbots.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug to Release|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				AdditionalIncludeDirectories="&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c&quot;;"
-				MkTypLibCompatible="false"
-				TargetEnvironment="1"
-				GenerateStublessProxies="true"
-				TypeLibraryName="$(InputName).tlb"
-				OutputDirectory="$(IntDir)"
-				HeaderFileName="$(InputName).h"
-				DLLDataFileName=""
-				InterfaceIdentifierFileName="$(InputName)_i.c"
-				ProxyFileName="$(InputName)_p.c"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions=" /Zm1000 /openmp"
-				Optimization="3"
-				InlineFunctionExpansion="0"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="false"
-				EnableFiberSafeOptimizations="true"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c&quot;;"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\&quot;Debug\&quot;"
-				ExceptionHandling="1"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="3"
-				RuntimeTypeInfo="true"
-				OpenMP="true"
-				AssemblerListingLocation="Debug"
-				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug/scriptbots.pdb"
-				WarningLevel="4"
-				DebugInformationFormat="3"
-				CompileAs="2"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;CMAKE_INTDIR=\&quot;Debug\&quot;"
-				AdditionalIncludeDirectories="&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c&quot;;"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				LinkLibraryDependencies="false"
-				AdditionalOptions=" /STACK:10000000 /machine:X86 /debug"
-				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib opengl32.lib glui32d.lib glut32.lib glu32.lib $(NOINHERIT)"
-				OutputFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug\scriptbots.exe"
-				Version="0.0"
-				LinkIncremental="0"
-				AdditionalLibraryDirectories="./lib"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug/scriptbots.pdb"
-				SubSystem="1"
-				LinkTimeCodeGeneration="1"
-				ImportLibrary="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\Debug\scriptbots.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -630,25 +508,6 @@
 					Outputs="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\generate.stamp"
 				/>
 			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug to Release|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Building Custom Rule C:/Users/Julian Hershey/Documents/Downloads/Thrive Dev/GhengopelALPHA-scriptsbots-7c5b77c/GhengopelALPHA-scriptsbots-7c5b77c/CMakeLists.txt"
-					CommandLine="&quot;C:\Program Files (x86)\CMake 2.8\bin\cmake.exe&quot; &quot;-HC:/Users/Julian Hershey/Documents/Downloads/Thrive Dev/GhengopelALPHA-scriptsbots-7c5b77c/GhengopelALPHA-scriptsbots-7c5b77c&quot; &quot;-BC:/Users/Julian Hershey/Documents/Downloads/Thrive Dev/GhengopelALPHA-scriptsbots-7c5b77c/GhengopelALPHA-scriptsbots-7c5b77c&quot; --check-stamp-file &quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\generate.stamp&quot;&#x0D;&#x0A;if errorlevel 1 goto :VCReportError&#x0D;&#x0A;"
-					AdditionalDependencies="&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeLists.txt&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeVS9FindMake.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineSystem.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeSystem.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeSystem.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeFindBinUtils.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCCompiler.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineCXXCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeFindBinUtils.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCXXCompiler.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCXXCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeSystemSpecificInformation.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeGenericSystem.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\Windows.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\WindowsPaths.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCInformation.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\Windows-cl.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\cl.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineRCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeRCCompiler.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeRCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeRCInformation.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeTestRCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\Windows-cl.cmake.in&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\Windows-cl.cmake.in&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCommonLanguageInclude.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeTestCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeTestCompilerCommon.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineCompilerABI.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeParseImplicitLinkInfo.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCCompilerABI.c&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCCompiler.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCXXInformation.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\Windows-cl.cmake&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCPlatform.cmake&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCXXPlatform.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\Platform\cl.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCommonLanguageInclude.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeTestCXXCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeTestCompilerCommon.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeDetermineCompilerABI.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeParseImplicitLinkInfo.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCXXCompilerABI.cpp&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeCXXCompiler.cmake.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\CMakeCXXCompiler.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindOpenGL.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindPackageHandleStandardArgs.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindPackageMessage.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeParseArguments.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindGLUT.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindOpenMP.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CheckCSourceCompiles.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CheckCXXSourceCompiles.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindPackageHandleStandardArgs.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\FindPackageMessage.cmake&quot;;&quot;C:\Program Files (x86)\CMake 2.8\share\cmake-2.8\Modules\CMakeParseArguments.cmake&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\config.h.in&quot;;&quot;C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeLists.txt&quot;;"
-					Outputs="C:\Users\Julian Hershey\Documents\Downloads\Thrive Dev\GhengopelALPHA-scriptsbots-7c5b77c\GhengopelALPHA-scriptsbots-7c5b77c\CMakeFiles\generate.stamp"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="..\glui-2.35\glui-2.35\src\msvc\lib\glui32.lib"
-			>
-		</File>
-		<File
-			RelativePath=".\Write.h"
-			>
 		</File>
 	</Files>
 	<Globals>

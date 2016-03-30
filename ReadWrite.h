@@ -3,8 +3,11 @@
 
 #include "Agent.h"
 #include "World.h"
+#include "GLView.h"
 #include <stdio.h>
 #include "settings.h"
+
+//#include <Windows.h>
 
 class ReadWrite
 {
@@ -12,16 +15,16 @@ class ReadWrite
 public:
 	ReadWrite();
 
-	void loadSettings(const char *filename); //load text settings file
+	void loadSettings(const char * filename); //load text settings file
 
-	void saveAgent(Agent *a, FILE *file); //save a single agent
-	void loadAgent(const char *filename);
+	void saveAgent(Agent * agent, const char * filename); //save a single agent
+	void loadAgent(const char * filename);
 
-	void saveWorld(World *world, float xpos, float ypos, const char *filename); //save world to text
-	void loadWorld(World *world, float &xtranslate, float &ytranslate, const char *filename); //load world from text
+	void saveWorld(World * world, float xpos, float ypos, const char * filename); //save world to text
+	void loadWorld(World * world, float &xtranslate, float &ytranslate, const char * filename); //load world from text
 	
-	const char *ourfile;
-	const char *lastfile;
+	const char * ourfile;
+	const char * lastfile;
 };
 
 #endif // READWRITE_H

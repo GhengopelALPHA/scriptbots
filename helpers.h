@@ -39,17 +39,6 @@ inline float cap(float a){
 	return a;
 }
 
-inline float capm(float a, float low, float hi){
-	if (a<low) return low;
-	if (a>hi) return hi;
-	return a;
-}
-
-inline int fround(float a){
-	if(a - ((int) (abs(a)))>=0.5) return (int) (a) + 1;
-	else return (int) (a);
-}
-
 //distance between point and a line connecting two other points
 inline float pointline(Vector2f posA, Vector2f posB, Vector2f posC){
 	//points A & B are of line; point C is other
