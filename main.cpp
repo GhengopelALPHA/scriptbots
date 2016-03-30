@@ -13,6 +13,10 @@
 
 #include "glui.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 
 
@@ -41,6 +45,9 @@ int main(int argc, char **argv) {
 	glutInitWindowSize(conf::WWIDTH,conf::WHEIGHT);
 	GLVIEW->win1= glutCreateWindow("Scriptbots");
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glShadeModel(GL_FLAT);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	GLUI_Master.set_glutDisplayFunc(gl_renderScene);
@@ -54,11 +61,14 @@ int main(int argc, char **argv) {
 	glutMotionFunc(gl_processMouseActiveMotion);
 	glutPassiveMotionFunc(gl_processMousePassiveMotion);
 
-	//New menu window. Will it work THIS time?
+	//menu window.
 	GLVIEW->gluiCreateMenu();
 
 	//create right click context menu
 	GLVIEW->glCreateMenu();
+
+	if (CreateDirectory("saves", NULL)) printf("\"saves\" directory did not exist. Does now!");
+	if (CreateDirectory("saved_agents", NULL)) printf("\"saved_agents\" directory did not exist. Does now!");
 
 	try{
 		glutMainLoop();
