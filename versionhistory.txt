@@ -1,3 +1,169 @@
+3/30/2016:
+Features:
++ Added grabbing: new output, if over 0.5, activates and pulls together a nearby target bot. If pulled too far, the 
+  target can break free. Only one target at the moment
+  * Should be saved and loaded, but isn't currently. Would require the saving of agent ID's, and that's Pandora's box at the moment,
+    as no id is ever saved
++ Added jaws: new output, when changed rapidly from low to high, activates and "chomps" on agents immediately in front.
+  NOTE: deathcause is same as spike deaths, "Killed by a Murder"
++ Healthloss of a parent through assexual reproduction is related to (parent radius)/(mean radius). A settings.h var exists to
+  change the impact, currently a bot with a radius of 10 will lose 0.325 health with assexual reproduction
++ Bots will suffer damage when populations are large via "Oxygen", simple size()/TOOMANYBOTS factor. Death cause: "LackOf Oxygen"
++ New Input: Random. Value with randn applied on every tick
+- Bots now will give health to any bot they want, not just lower-health bots
+- Brains when being mutated will no longer skip any more mutations if a major mutation occurs. Let natural selection have options
+- Removed spike startle. Not really relevant any longer since agents have physical bodies now and can't pass through each other
+
+= Hazard dropped by bots faster (rate of 0.001->0.0015)
+= Meat is much shorter lived but much more fulfilling 
+= Meat dropped by slow-kill deaths reduced to 25%. Counter added to give grace period for fresh-kill deaths after spikings,
+  durration set by FRESHKILLTIME
+= In effort to bring variety locally, collision reaction force increased. The way I see it, weak collisions allow agents to overlap,
+  too far and they kill each other. We need to let them bump into each other and mingle more.
+= Fixed ZeroHealth bug. Bots would be kept afloat just above 0 health because fruit intake occured after hazard loss, keeping
+  bots killed by hazard (health forced = 0) alive, barely.
+= Fixed bug where newborn bots were not using parent's angles to correctly place them behind parents. Note, this will not apply
+  to agents driving backwards. Babies will ALWAYS be spawned on the side opposite the parent's spike
+= Fixed long-standing bug with agent movement. At top speed, wheels would not drive agents straight, but rather at an oblique angle
+
+Simulation:
++ Added selected agent display reports of jumping and grabbing status
++ following is now related to scalemult, so at closer zooms the follow target will be closer to the middle of the window
++ Added a key, 'q', that instantly zooms and centers the world so that everything can be seen.
++ Added new visualization: Crossable. Will highlight bots that can perform sexual reproduction with selected agent, by making
+  all perfect relatives light blue, other relatives blue, all cousins purple, and all non-relatives grey
++ Newborn babies will show a small grey event
++ Report now contains RandomSeed: picks a random bot, and a random brain box, and reports its seed counter.
++ Toppled report.txt fprintf function into multiple. Easier to navigate code
+
+Old Saves:
+BROKEN! On account of new features for bots - grabbing and jaws,new input - random, and changed physical constants - REACTPOWER and
+ FRESHKILLTIME, old saves will not preserve the situation. With regard to freshkill, old saves are not compatable
+
+
+
+12/31/15
+Bots:
++ New sensors: A cell variation of smell. Counts values of cells nearby and reports the ratio to total cells sensed.
+  Four "scents" available to bots: Fruit, Meat, Hazard, and Water
++ New brain box feature: seed. Counts the number of sucesses (reproduction events) a single box has experienced. Only
+  effects sexual reproduction, where comparing the seed counts of the same box in the two parents will change the
+  probability of which parent's box is coppied. Gives massive value to sexual reproduction, as brain boxes which have
+  suffered a detrimental mutation are much more quickly weeded out
++ New output: Sexual Projection. A bot with this output will be more likely to take part in sexual reproduction with others
++ Num Babies trait finally introduced. Now, the number of children produced from reproduction events is under the control
+  of the agents. An inheritable and mutable integer that is never allowed to go below 1
++ Agents now keep track of how they died. Strings are stored that describe their death cause, which are collected by the
+  world and reported both in the report.txt and, if the agent was selected, to the output window.
++ New selected bot outputs: Bots will report to the output window when they give birth and how many children they had,
+  and their cause of death
++ Agents with large radii have purpose: larger agents move less in collisions, and take less damage if over-pressured
++ Two-way wheels enabled once more: Now agents have four wheel outputs, left backwards and forwards, and right backwards
+  and forwards. NOTE: IMEDITATELY after enabling these, tribes were spotted once more! DO NOT REMOVE THIS FEATURE!!!
++ Newborn bots are born grey, to guarentee vision activation by parents, neighbors
++ Newborn bots and their mothers will be given extra health according to mother's -repcounter/reprate. Mothers take MINMOMHEALTH damage
+
+- Eyes sensing cells feature removed. Final judgement: the effects of eyes being over-saturated are too damaging for
+  too little of an evolutionary factor. Code still present, but must be re-worked in if desired. May later make a
+  setting to determine if it's used.
+- "selected" tag removed. Selected agent now handled by world.
+
+= Code for producing random agents improved. Lungs will be adapted for terrain spawned in, temp_pref will reflect
+  spawned y-axis location, and custom positions are now available (preparation for point-click agent adding functionality).
+= Jump code: Output now forced to be a change-sensitive output, making jump a less common, and more challenging solution. 
+  Change requires min age for bot jump capability: only agents older than 0 can jump. (init 0->val change sensitive bug)
+= Reproduction re-written: now the mother's health will always be split amongst the mother and children
+= Sexual reproduction separated from health sharing. Instead uses new output, Sexual Projection
+= Give change: now agents with give can specify the range, according to (output-0.5)*2 of FOOD_SHARE-DISTANCE
+= Agent brains changed: Global Weight range decreased, Weight range increased, code for reprodction changed
+= Stomach changes: Worst any stomach type can do to other intakes is 50% reduction, instead of 100%. Omnivores should
+  be more plentiful
+= Collision changes: agents that collided and died will now output full meat value
+= Reworked metabolism slightly: now effects the max speed bots can travel at, and should never be mutated to zero
+
+Sim:
++ Plant food now grows when hazard exists on same cell, settings.h variable can fine tune the rate
++ New stats on bots: killed, hits, and death cause. Records number of kills and number of attacks this bot has commited,
+  and death cause is collected by the world and stored in report.txt, resets every epoch
++ New select options:
+  Follow most aggressive: targets bot with greatest cumulative of its kills + 1/4 its attacks
+  Follow most social: targets bot with highest "give" output + 1/4 its sexual projection
++ Report updates:
+ + Added tracking fruit numbers (counts those cells with >50% fruit)
+ + Added tracking of Terrestrial and Aquatic bot counts and top generations of those
+ + Added death count
+ + Added death causes, along with counts of each. Has such stucture that some extra work is needed to sort and graph the
+   data, but a simple Excel function(s) can do the trick. Has provided VERY valuable data
+ + Introduced Random Generation: Picks a random agent and reports its gencount. Actually very useful in figuring out
+   generation paths of different species, also the approximate generations of the dominant species 
+ = Cleaned up report code, including a bug where fruigvores and carnivores top gens were mixed up
++ "Closed" state of world now persists with saving and loading
++ Pressing the "/" key will now insta-heal selected agent
+
+= New code optimizations (performance of 300 fps again on an i3 processor)
+= Follow & agent selection code altered and updated majorly:
+ + Agents can be automatically selected via the old "following" types, and a toggle option deterimines if it's followed
+ + Internal changes: the world now keeps an agent ID value stored (or -1 if no agent selected)
+ + Adjusted code to take zoom scale into account, minor selection distance limit increase at far zooms
+ + Changes to manual selection / automatic selection interaction. Any manually selected agent will overide any auto
+   selection chosen. Likewise, any re-activated autoselection will override the manual selection
+ = Fixed deletion of first selected agent bug
+= Mouse click-and-drag no longer counts as a mouse click. Click actions now only performed at button release
+= Fixed bug with agents children counters only counting reproduction events, now reports physical children
+= Fixed long standing bug with init fruit decaying b/c it wasn't spawned on plant-filled cells
+= Modified terrain generation code for accuracy of settings.h vars (OCEANPERCENT now actually generates that % of water)
+= New enums make Layers, Select, Visual, Input, Output, and Stomach code easier to understand and make changes to
+= Hazard damage greatly increased, now poses a significant threat to established species (and circle drivers)
+= Other food balancing changes. I'm probably starting to repeat old values now...
+= Meta-mutation rates adjusted: more likely for chance-of-mutations to change, much less change in strength-of-mutations
+= Fixed messy code structure with ReadWrite.cpp
+= Cleaned up using new helpers.h capm instead of capCell. capm takes 3 arguments, a, low, and high, and returns value
+  between low and high if "a" is not between them, "a" otherwise.
+
+* GLview's modcounter gets stuck after loading. Will investigate
+
+Graphics:
++ New Static display: renders things in a fixed frame with respect to the window. Now includes the following:
+ + New Selected Agent Overlay: displays stats and values of selected agent, including health, lung type, giving,
+   # children, mutrates, radius, # kills, stomach type, temp preference, land preference, and MORE
+ + New debug infos: counts of reported food and hazard cells, current world and GLview modcounters. Room for expansion
+ + Added visual crosshair indicating the center of the window and directional axises
+ = Text informers (relating "closed", "Following", and "Paused" statuses) have been moved to static display
++ New volume indicators: when "Volume" agent visual mode is active, expanding "pings" indicating the volume (and future
+  frequency) of the agent's voice are displayed. Are entirely graphical, no extra sim processing time used on fast mode.
+
+= Transparency functionality added. Agent events, eye lines of sight, outlines, spikes and boost now utilize blur effects
+ = Altered rendering of bot outlines: now always renders at close zoom, but blurs to the bot visualization color at wide
+   zoom. Makes visual data from agents more meaningful and easy to see globally.
+ = Agent spikes, eyes, and ears now blur away when zoomed out
+= Fixed window resizing and mouse-world interactions being incorrect. Now fully supports any kind of window resizing!
+= Fixed Species display color coding to actually display possibly meaningful colors. Now, almost every randomly generated
+  species can be seen to be visually distinct, and major deviations between subspecies will be visualized.
+= Improved code of drawing agents for more utility. Now supports custom positional rendering, instead of strictly bot x&y.
+= Prettied up the agent report display: shows more stats and values. Mostly meaningless now with the Agent Overlay.
+= Fixed bug with text printing where a different font specified in the method arguement wasn't used (perhaps code was
+  intended to be written to handle exceptions where incorrect fonts were passed?)
+
+Saves:
++ IMPORTANT: All saves will be placed in and loaded from a "saves" folder, which if does not exist will be made by the
+  program. When loading and saving it is NOT required that the folder/directory be specified. Again, NOT required.
++ Report.txt will be saved with the world to a new text file in the "saves" folder. If a saved report already exists by
+  the same name, checking is done to see if it is a continuation of the saved world. If it is, any new report.txt data
+  generated will be appended. Otherwise, the report file is replaced entirely.
++ "numbabies" agent tag, backwards compatable (old saves can be loaded), but uniqueness-breaking (random values upon load)
++ "seed" brain box tag, backwards compatable and uniqueness-preserving (constant, non-sim-breaking values upon load)
++ "closed" world tag, backwards compatable and uniqueness-breaking (always FALSE from old saves)
+
+- "selected" tag removed. Old selections will not be preserved from old saves, and will no longer be loaded or saved
+- "killed" tag removed. The flag is always set to FALSE before writing, so it's pointless to store
+
+= Old saves are still compatable, but may not work as intended (numbabies, closed world)
+
+* NOTE FOR NON-WINDOWS USERS: you are going to have to implement some other form of folder generation and checking than
+  that which is implimented currently in main.cpp.
+
+
+
 12/25/13 changes
 + Added menu window via GLUI; gui integration achieved. Many options and live variables migrated there.
   Current list of all live variables:
@@ -34,6 +200,8 @@
 = Poison/hazard hurts bots more (several runs were observed with localized specitation after this change!!!)
 = Food balancing
 = Moved graph and infos to better fit 1366x768 res screens
+
+
 
 7/22/13 changes
 + Hearing and Sound sensors split, now each bot has NUMEARS of these sensor pairs (called ears), 
@@ -80,6 +248,7 @@
   Mutation chances and magnitudes of brain boxes and agent traits tweaked
 
 
+
 11/7/12 changes
 + Added Hazard layer: instant hazards which last a random number of ticks before disapearing, slowly increases under live bots and damages them.
 + Added Jump: output that sets a counter for "height" that slowly decreases over time. Jumping bots cannot be attacked, cannot change direction
@@ -105,6 +274,7 @@
 = Continued plant, meat, and hazard balancing
 * Notable bug: bots turn instantly when jump= 0, making the action look ugly. Needs work
 * FPS has been reduced to less than 200 at program init, settings as is, on an intel i3, 2.1GHz Windows machine. This is annoying
+
 
 
 6/26/12 changes

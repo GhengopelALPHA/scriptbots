@@ -4,8 +4,3 @@
 Debug/
 Release/
 build/
-*.SCB
-*.dll
-*.lib
-*.vcproj
-report.txt
