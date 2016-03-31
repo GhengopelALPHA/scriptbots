@@ -5,7 +5,6 @@ Project Home: https://sites.google.com/site/scriptbotsevo/home
 To compile scriptbots you will need:
 * CMake >= 2.8 (http://www.cmake.org/cmake/resources/software.html)
 * OpenGL, GLUT (http://www.opengl.org/resources/libraries/glut/)
-* GLUI >= 2.30 (http://glui.sourceforge.net/#download) (unsure if this is proper link for users, might just be for devs.)
 
 For windows: 
 Extracting the .zip file with the version number inside the download will give the executable and its parts. Tested on a 
