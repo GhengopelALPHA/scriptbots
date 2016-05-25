@@ -34,12 +34,10 @@ MLPBox::MLPBox()
 
 MLPBrain::MLPBrain()
 {
-
 	//constructor
-	#pragma omp parallel for ordered schedule(dynamic) //allow brain boxes to be created in parallel
+	// do not OMP!!!
 	for (int i=0;i<BRAINSIZE;i++) {
 		MLPBox a; //make a random box and copy it over
-		#pragma omp ordered //restore order and collapse the parallel threads
 		boxes.push_back(a);
 		}
 
@@ -94,8 +92,7 @@ void MLPBrain::tick(vector< float >& in, vector< float >& out)
 					val*=10;
 				}
 
-				if (j==CONNS-1) acc+= val*abox->w[k]*(out[Output::CHOICE]*2-1);//last connection is affected by choice
-				else acc+= val*abox->w[k];
+				acc+= val*abox->w[k];
 			}
 			
 			acc*= abox->gw;
@@ -142,6 +139,14 @@ void MLPBrain::initMutate(float MR, float MR2)
 	for (int j=0; j<(int)boxes.size(); j++){
 		MLPBox* abox= &boxes[j];
 		if (randf(0,1)<MR/50) {
+			//randomize synapse type
+			int rc= randi(0, CONNS);
+			abox->type[rc] = randi(0,2);
+//		  a2.mutations.push_back("synapse type randomized\n");
+			abox->seed= 0;
+		}
+
+		if (randf(0,1)<MR/40) {
 			//copy box
 			int k= randi(0,BRAINSIZE);
 			if(k!=j) {
@@ -156,15 +161,7 @@ void MLPBrain::initMutate(float MR, float MR2)
 			}
 		}
 
-		if (randf(0,1)<MR/40) {
-			//randomize synapse type
-			int rc= randi(0, CONNS);
-			abox->type[rc] = randi(0,2);
-//		  a2.mutations.push_back("synapse type randomized\n");
-			abox->seed= 0;
-		}
-
-		if (randf(0,1)<MR/30) {
+		if (randf(0,1)<MR/20) {
 			//randomize connection
 			int rc= randi(0, CONNS);
 			int ri= randi(0,BRAINSIZE);
@@ -173,8 +170,8 @@ void MLPBrain::initMutate(float MR, float MR2)
 			abox->seed= 0;
 		}
 
-		if (randf(0,1)<MR/20) {
-			//swap two inputs
+		if (randf(0,1)<MR/10) {
+			//swap two input sources
 			int rc1= randi(0, CONNS);
 			int rc2= randi(0, CONNS);
 			int temp= abox->id[rc1];
@@ -185,7 +182,7 @@ void MLPBrain::initMutate(float MR, float MR2)
 		}
 
 		// more likely changes here
-		if (randf(0,1)<MR/10) {
+		if (randf(0,1)<MR/2) {
 			//jiggle global weight
 			abox->gw+= randn(0, MR2);
 			if (abox->gw<0) abox->gw=0;
@@ -193,14 +190,14 @@ void MLPBrain::initMutate(float MR, float MR2)
 //			abox->seed= 0;
 		}
 
-		if (randf(0,1)<MR/5) {
+		if (randf(0,1)<MR) {
 			//jiggle bias
 			abox->bias+= randn(0, MR2);
 //			 a2.mutations.push_back("bias jiggled\n");
 //			abox->seed= 0;
 		}
 
-		if (randf(0,1)<MR/2) {
+		if (randf(0,1)<MR) {
 			//jiggle dampening
 			abox->kp+= randn(0, MR2);
 			if (abox->kp<0.01) abox->kp=0.01;

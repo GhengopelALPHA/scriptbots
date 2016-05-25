@@ -34,14 +34,6 @@ void World::update()
 	vector<int> dt;
 
 	//Process periodic events
-	//Age goes up!
-	if (modcounter%100==0) {
-		#pragma omp parallel for
-		for (int i=0; i<(int)agents.size(); i++) {
-			agents[i].age+= 1;
-		}		
-	}
-	
 	if (conf::REPORTS_PER_EPOCH>0 && (modcounter%(10000/conf::REPORTS_PER_EPOCH)==0)) {
 		//write report and record counts
 		numHerbivore[ptr]= getHerbivores();
@@ -61,8 +53,7 @@ void World::update()
 		modcounter=0;
 		current_epoch++;
 		//if autosave enabled
-//		ReadWrite* savehelper= new ReadWrite(); //for loading/saving
-//		savehelper->saveWorld(this, 0, 0, "AUTOSAVE.SCB");
+		
 
 	}
 	if ((modcounter%conf::FOODADDFREQ==0 && !CLOSED) || getFood()<conf::MINFOOD) {
@@ -97,6 +88,16 @@ void World::update()
 					cells[Layer::PLANTS][cx][cy]+= conf::FOODGROWTH*cells[Layer::HAZARDS][cx][cy]/conf::HAZARDMAX; //food grows out of waste/hazard
 				}
 			}
+			if (randf(0,1)<conf::FOODSPREAD && cells[Layer::FRUITS][cx][cy]>0.5*conf::FRUITMAX) {
+				//food seeding
+				int ox= randi(cx-1-conf::FOODRANGE,cx+2+conf::FOODRANGE);
+				int oy= randi(cy-1-conf::FOODRANGE,cy+2+conf::FOODRANGE);
+				if (ox<0) ox+= CW;
+				if (ox>CW-1) ox-= CW;
+				if (oy<0) oy+= CH;
+				if (oy>CH-1) oy-= CH; //code up to this point ensures world edges are crossed and not skipped
+				if (cells[Layer::PLANTS][ox][oy]<=conf::FOODMAX*3/4) cells[Layer::PLANTS][ox][oy]+= conf::FOODMAX/4;
+			}
 			cells[Layer::PLANTS][cx][cy]= capm(cells[Layer::PLANTS][cx][cy], 0, conf::FOODMAX); //cap food at FOODMAX
 
 			//meat = cells[Layer::MEATS]...
@@ -118,31 +119,11 @@ void World::update()
 			if (cells[Layer::PLANTS][cx][cy]<=conf::FOODMAX*conf::FRUITREQUIRE && cells[Layer::FRUITS][cx][cy]>0){
 				cells[Layer::FRUITS][cx][cy]-= conf::FRUITDECAY; //fruit decays from lack of plant life
 			}
-			if (randf(0,1)<conf::FOODSPREAD && cells[Layer::FRUITS][cx][cy]>0.5*conf::FRUITMAX) {
-				//food seeding
-				int ox= randi(cx-1-conf::FOODRANGE,cx+2+conf::FOODRANGE);
-				int oy= randi(cy-1-conf::FOODRANGE,cy+2+conf::FOODRANGE);
-				if (ox<0) ox+= CW;
-				if (ox>CW-1) ox-= CW;
-				if (oy<0) oy+= CH;
-				if (oy>CH-1) oy-= CH; //code up to this point ensures world edges are crossed and not skipped
-				if (cells[Layer::PLANTS][ox][oy]<=conf::FOODMAX*3/4) cells[Layer::PLANTS][ox][oy]+= conf::FOODMAX/4;
-			}
 			cells[Layer::FRUITS][cx][cy]= capm(cells[Layer::FRUITS][cx][cy], 0, conf::FRUITMAX); //cap
+
+			//light = cells[Layer::LIGHT]...
+			cells[Layer::LIGHT][cx][cy]= capm(0.5+sin((cx*2*M_PI)/CW-(modcounter+current_epoch*conf::FRAMES_PER_EPOCH)*2*M_PI/conf::FRAMES_PER_DAY), 0, 1);
 		}
-	}
-	
-	//reset any counter variables per agent and do debug stuff
-	#pragma omp parallel for
-	for (int i=0; i<(int)agents.size(); i++) {
-		//reduce fresh kill flag
-		if(agents[i].freshkill>0) agents[i].freshkill-= 1;
-
-		//process indicator (used in drawing)
-		if(agents[i].indicator>0) agents[i].indicator-= 1;
-
-		//reset dfood for processOutputs
-		agents[i].dfood= 0;
 	}
 
 	//give input to every agent. Sets in[] array
@@ -151,19 +132,37 @@ void World::update()
 	//brains tick. computes in[] -> out[]
 	brainsTick();
 
-	//read output and process consequences of bots on environment. requires out[]
-	processOutputs();
-
-	//process bots:
+	//reset any counter variables per agent and do other stuff before processOutputs
+	#pragma omp parallel for
 	for (int i=0; i<(int)agents.size(); i++) {
+		Agent* a= &agents[i];
+
+		//reduce fresh kill flag
+		if(a->freshkill>0) a->freshkill-= 1;
+
+		//process indicator (used in drawing)
+		if(a->indicator>0) a->indicator-= 1;
+
+		//process jaw renderer
+		if(a->jawrend>0) a->jawrend-=1;
+
+		//reset dfood for processOutputs
+		a->dfood= 0;
+
 		//find brain activity on this tick
-		agents[i].setActivity();
+		a->setActivity();
 
 		//doLiveMutate
-		float MR= agents[i].MUTRATE1;
-		float MR2= agents[i].MUTRATE2;
-		agents[i].brain.liveMutate(MR, MR2, agents[i].out);
+		float MR= a->MUTRATE1;
+		float MR2= a->MUTRATE2;
+		a->brain.liveMutate(MR, MR2, a->out);
+
+		//Age goes up!
+		if (modcounter%100==0) a->age+= 1;
 	}
+
+	//read output and process consequences of bots on environment. requires out[]
+	processOutputs();
 
 	//process health:
 	healthTick();
@@ -204,8 +203,8 @@ void World::update()
 		if (agents[i].health<=0) { 
 			if (agents[i].health<0) agents[i].writeIfKilled("Killed by Something ?");
 		
-			int cx= (int) capm(agents[i].pos.x/conf::CZ, 0, conf::WIDTH/conf::CZ);
-			int cy= (int) capm(agents[i].pos.y/conf::CZ, 0, conf::HEIGHT/conf::CZ);
+			int cx= (int) agents[i].pos.x/conf::CZ;
+			int cy= (int) agents[i].pos.y/conf::CZ;
 
 			float meat= cells[Layer::MEATS][cx][cy];
 			float agemult= 1.0;
@@ -259,10 +258,14 @@ void World::setInputs()
 	float PI38= 3*PI8; //3pi/8/2
 	float PI4= M_PI/4;
    
-	#pragma omp parallel for// schedule(dynamic)
+	#pragma omp parallel for schedule(dynamic)
 	for (int i=0; i<(int)agents.size(); i++) {
 		Agent* a= &agents[i];
 
+		//our cell position
+		int scx= (int) a->pos.x/conf::CZ;
+		int scy= (int) a->pos.y/conf::CZ;
+		
 		//HEALTH
 		a->in[Input::HEALTH]= cap(a->health/2); //divide by 2 since health is in [0,2]
 
@@ -272,13 +275,14 @@ void World::setInputs()
 //		a->in[#]= cells[Layer::MEATS][cx][cy]/conf::MEATMAX;
 
 		//SOUND SMELL EYES
-		vector<float> r(NUMEYES,0);
-		vector<float> g(NUMEYES,0);
-		vector<float> b(NUMEYES,0);
+		float light= cells[Layer::LIGHT][scx][scy]; //grab light level
+
+		vector<float> r(NUMEYES,0.5*light);
+		vector<float> g(NUMEYES,0.5*light);
+		vector<float> b(NUMEYES,0.5*light);
 					   
 		float smellsum=0;
 
-		vector<float> soundsum(NUMEARS,0);
 		vector<float> hearsum(NUMEARS,0);
 
 		//BLOOD ESTIMATOR
@@ -286,13 +290,11 @@ void World::setInputs()
 
 		//cell sense
 		int minx, maxx, miny, maxy;
-		int scx= (int) (a->pos.x/conf::CZ);
-		int scy= (int) (a->pos.y/conf::CZ);
 
-		minx= max((scx-1-conf::DIST/conf::CZ),(float)0);
-		maxx= min((scx+2+conf::DIST/conf::CZ),(float)CW);
-		miny= max((scy-1-conf::DIST/conf::CZ),(float)0);
-		maxy= min((scy+2+conf::DIST/conf::CZ),(float)CH);
+		minx= max((scx-conf::DIST/conf::CZ),(float)0);
+		maxx= min((scx+1+conf::DIST/conf::CZ),(float)CW);
+		miny= max((scy-conf::DIST/conf::CZ),(float)0);
+		maxy= min((scy+1+conf::DIST/conf::CZ),(float)CH);
 
 		float fruit= 0, meat= 0, hazard= 0, water= 0;
 
@@ -360,7 +362,7 @@ void World::setInputs()
 			Agent* a2= &agents[j];
 
 			if (a->pos.x<a2->pos.x-conf::DIST || a->pos.x>a2->pos.x+conf::DIST
-					|| a->pos.y>a2->pos.y+conf::DIST || a->pos.y<a2->pos.y-conf::DIST) continue;
+				|| a->pos.y>a2->pos.y+conf::DIST || a->pos.y<a2->pos.y-conf::DIST) continue;
 
 			float d= (a->pos-a2->pos).length();
 
@@ -379,35 +381,48 @@ void World::setInputs()
 
 					float eardist= (earpos-a2->pos).length();
 
-					//sound
-					soundsum[q]+= a->sound_mod*(1-eardist/conf::DIST)*(max(fabs(a2->w1),fabs(a2->w2)));
-
-					//hearing. Listening to other agents
-					hearsum[q]+= a->hear_mod*(1-eardist/conf::DIST)*a2->volume;
+					//hearing. Listening to other agents and their activities
+					for(int n=0;n<2;n++){
+						float otone, ovolume;
+						if(n==0){ //if n=0, do agent vocals.
+							otone= a2->tone;
+							ovolume= a2->volume;
+						}else if(n==1){ //if n=1, do agent wheels
+							otone= 0.25;
+							ovolume= (max(fabs(a2->w1),fabs(a2->w2)));
+						} //future: if n=2, do agent intake sound
+						if(otone>=a->hearhigh[q]) continue;
+						if(otone<=a->hearlow[q]) continue;
+						float tonemult= cap(min((a->hearhigh[q] - otone)/conf::SOUNDPITCHRANGE,(otone - a->hearlow[q])/conf::SOUNDPITCHRANGE));
+						hearsum[q]+= a->hear_mod*(1-eardist/conf::DIST)*ovolume*tonemult;
+					}
 				}
 
-				//eyes: bot sight
 				float ang= (a2->pos- a->pos).get_angle(); //current angle between bots
-				
-				for(int q=0;q<NUMEYES;q++){
-					float aa = a->angle + a->eyedir[q];
-					if (aa<-M_PI) aa += 2*M_PI;
-					if (aa>M_PI) aa -= 2*M_PI;
-					
-					float diff1= aa- ang;
-					if (fabs(diff1)>M_PI) diff1= 2*M_PI- fabs(diff1);
-					diff1= fabs(diff1);
-					
-					float fov = a->eyefov[q];
-					if (diff1<fov) {
-						//we see a2 with this eye. Accumulate stats
-						float mul1= a->eye_see_agent_mod*(fabs(fov-diff1)/fov)*(1-d/conf::DIST)*(1-d/conf::DIST);
-						r[q] += mul1*a2->red;
-						g[q] += mul1*a2->gre;
-						b[q] += mul1*a2->blu;
-						if(a->id==SELECTION && isDebug()){
-							linesA.push_back(a->pos);
-							linesB.push_back(a2->pos);
+
+				//eyes: bot sight
+				//we will skip all eyesight if our agent is in the dark (light==0)
+				if(light!=0){
+					for(int q=0;q<NUMEYES;q++){
+						float aa = a->angle + a->eyedir[q];
+						if (aa<-M_PI) aa += 2*M_PI;
+						if (aa>M_PI) aa -= 2*M_PI;
+						
+						float diff1= aa- ang;
+						if (fabs(diff1)>M_PI) diff1= 2*M_PI- fabs(diff1);
+						diff1= fabs(diff1);
+						
+						float fov = a->eyefov[q];
+						if (diff1<fov) {
+							//we see a2 with this eye. Accumulate stats
+							float mul1= light*a->eye_see_agent_mod*(fabs(fov-diff1)/fov)*(1-d/conf::DIST)*(1-d/conf::DIST);
+							r[q] += mul1*a2->red;
+							g[q] += mul1*a2->gre;
+							b[q] += mul1*a2->blu;
+							if(a->id==SELECTION && isDebug()){ //debug sight lines, get coords
+								linesA.push_back(a->pos);
+								linesB.push_back(a2->pos);
+							}
 						}
 					}
 				}
@@ -419,8 +434,7 @@ void World::setInputs()
 				diff4= fabs(diff4);
 				if (diff4<PI38) {
 					float mul4= ((PI38-diff4)/PI38)*(1-d/conf::DIST);
-					//if we can see an agent close with both eyes in front of us
-					blood+= a->blood_mod*mul4*(1-agents[j].health/2); //remember: health is in [0 2]
+					blood+= a->blood_mod*mul4*(1-agents[j].health/2); //remember: health is in [0,2]
 					//agents with high life dont bleed. low life makes them bleed more
 				}
 			}
@@ -429,8 +443,6 @@ void World::setInputs()
 		//temperature varies from 0 to 1 across screen.
 		//it is 0 at equator (in middle), and 1 on edges. Agents can sense this range
 		float temp= (float)2.0*abs(a->pos.y/conf::HEIGHT - 0.5);
-
-//		for(int e;e<NUMEYES;e++){
 
 		a->in[Input::RED1]= cap(r[0]);
 		a->in[Input::GRE1]= cap(g[0]);
@@ -450,8 +462,7 @@ void World::setInputs()
 
 		a->in[Input::CLOCK1]= abs(sin((modcounter+current_epoch*conf::FRAMES_PER_EPOCH)/a->clockf1));
 		a->in[Input::CLOCK2]= abs(sin((modcounter+current_epoch*conf::FRAMES_PER_EPOCH)/a->clockf2));
-		a->in[Input::SOUND1]= cap(soundsum[0]);
-		a->in[Input::SOUND2]= cap(soundsum[1]);
+		a->in[Input::CLOCK3]= abs(sin((modcounter+current_epoch*conf::FRAMES_PER_EPOCH)/a->clockf3));
 		a->in[Input::HEARING1]= cap(hearsum[0]);
 		a->in[Input::HEARING2]= cap(hearsum[1]);
 		a->in[Input::BOT_SMELL]= cap(smellsum);
@@ -499,6 +510,7 @@ void World::processOutputs()
 		a->blu+= 0.2*(a->out[Output::BLU]-a->blu);
 		if (a->jump<=0) a->boost= a->out[Output::BOOST]>0.5; //if jump height is zero, boost can change
 		a->volume= a->out[Output::VOLUME];
+		a->tone= a->out[Output::TONE];
 		a->give= a->out[Output::GIVE];
 		a->sexproject= a->out[Output::PROJECT]>=0.5 ? true : false;
 
@@ -520,11 +532,17 @@ void World::processOutputs()
 		//jaw *snap* mechanic
 		float newjaw= cap(a->out[Output::JAW]-a->jawOldPos);
 
-		if(a->jawPosition>0) a->jawPosition*= -1;
-		else if (a->jawPosition<0) a->jawPosition= min(0.0, a->jawPosition + 0.05*(2 + a->jawPosition));
+		if(a->jawPosition>0) {
+			a->jawPosition*= -1;
+			a->jawrend= 15;
+		} else if (a->jawPosition<0) a->jawPosition= min(0.0, a->jawPosition + 0.05*(2 + a->jawPosition));
 		else if (a->age>0) a->jawPosition= newjaw;
 		a->jawOldPos= a->out[Output::JAW];
 
+		//clock 3 gets frequency set by output, but not instantly
+		a->clockf3+= 0.5*((98*(1-a->out[Output::CLOCKF3])+2) - a->clockf3);
+		if(a->clockf3>100) a->clockf3= 100;
+		if(a->clockf3<2) a->clockf3= 2;
 	}
 
 	//move bots
@@ -568,8 +586,8 @@ void World::processOutputs()
 	for (int i=0; i<(int)agents.size(); i++) {
 		Agent* a= &agents[i];
 
-		int scx= (int) capm(a->pos.x/conf::CZ, 0, conf::WIDTH/conf::CZ);
-		int scy= (int) capm(a->pos.y/conf::CZ, 0, conf::HEIGHT/conf::CZ);
+		int scx= (int) a->pos.x/conf::CZ;
+		int scy= (int) a->pos.y/conf::CZ;
 
 		if (a->health>0 && a->jump<=0){ //no interaction with these cells if jumping or dead
 			//plant food
@@ -580,7 +598,7 @@ void World::processOutputs()
 				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
 				//Plant intake is proportional to plant stomach, inverse to meat & fruit stomach, and speed
 				plantintake= min(food,conf::FOODINTAKE)*a->stomach[Stomach::PLANT]*
-							 (1-a->stomach[Stomach::MEAT]/2)*(1-a->stomach[Stomach::FRUIT]/2)*speedmul;
+							 (1-a->stomach[Stomach::MEAT]*3/4)*(1-a->stomach[Stomach::FRUIT]*3/4)*speedmul;
 				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*plantintake;
 				a->health+= plantintake;
 				cells[Layer::PLANTS][scx][scy]-= min(food,conf::FOODWASTE*plantintake/conf::FOODINTAKE);
@@ -593,7 +611,7 @@ void World::processOutputs()
 				//agent eats meat
 				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
 				meatintake= min(meat,conf::MEATINTAKE)*a->stomach[Stomach::MEAT]*
-					(1-a->stomach[Stomach::PLANT]/2)*(1-a->stomach[Stomach::FRUIT]/2)*speedmul;
+					(1-a->stomach[Stomach::PLANT]*3/4)*(1-a->stomach[Stomach::FRUIT]*3/4)*speedmul;
 				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*meatintake;
 				a->health += meatintake;
 				cells[Layer::MEATS][scx][scy]-= min(meat,conf::MEATWASTE*meatintake/conf::MEATINTAKE);
@@ -606,7 +624,7 @@ void World::processOutputs()
 				//agent eats fruit
 				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
 				fruitintake= min(fruit,conf::FRUITINTAKE)*a->stomach[Stomach::FRUIT]*
-					(1-a->stomach[Stomach::MEAT]/2)*(1-a->stomach[Stomach::PLANT]/2)*speedmul;
+					(1-a->stomach[Stomach::MEAT]*3/4)*(1-a->stomach[Stomach::PLANT]*3/4)*speedmul;
 				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*fruitintake;
 				a->health += fruitintake;
 				cells[Layer::FRUITS][scx][scy]-= min(fruit,conf::FRUITWASTE*fruitintake/conf::FRUITINTAKE);
@@ -623,6 +641,77 @@ void World::processOutputs()
 				if(hazard<conf::HAZARDMAX*9/10) hazard+= conf::HAZARDDEPOSIT;
 				cells[Layer::HAZARDS][scx][scy]= capm(hazard, 0, conf::HAZARDMAX*9/10);
 			}
+
+/* future decomposer code
+
+//plant food
+			float food= cells[Layer::PLANTS][scx][scy];
+			float plantintake= 0;
+			if (food>0 && a->health<2) {
+				//agent eats the food
+				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
+				//Plant intake is proportional to plant stomach, inverse to meat, fruit, & hazard stomach, and speed
+				plantintake= min(food,conf::FOODINTAKE)*a->stomach[Stomach::PLANT]*(1-a->stomach[Stomach::MEAT]/2)
+					*(1-a->stomach[Stomach::FRUIT]/2)*(1-a->stomach[Stomach::HAZARD]/2)*speedmul;
+				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*plantintake;
+				a->health+= plantintake;
+				cells[Layer::PLANTS][scx][scy]-= min(food,conf::FOODWASTE*plantintake/conf::FOODINTAKE);
+			}
+			//agents fill up plant cells proportionally to their hazard stomach beyond 0.5
+			if(a->stomach[Stomach::HAZARD>0.5) {
+				food+= conf::FOODGROWTH*(a->stomach[Stomach::HAZARD]*2-1);
+				cells[Layer::PLANTS][scx][scy]= capm(food, 0, conf::FOODMAX);
+			}
+
+			//meat food
+			float meat= cells[Layer::MEATS][scx][scy];
+			float meatintake= 0;
+			if (meat>0 && a->health<2) {
+				//agent eats meat
+				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
+				meatintake= min(meat,conf::MEATINTAKE)*a->stomach[Stomach::MEAT]*(1-a->stomach[Stomach::PLANT]/2)
+								*(1-a->stomach[Stomach::FRUIT]/2)*(1-a->stomach[Stomach::HAZARD]/2)*speedmul;
+				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*meatintake;
+				a->health += meatintake;
+				cells[Layer::MEATS][scx][scy]-= min(meat,conf::MEATWASTE*meatintake/conf::MEATINTAKE);
+			}
+
+			//Fruit food
+			float fruit= cells[Layer::FRUITS][scx][scy];
+			float fruitintake= 0;
+			if (fruit>0 && a->health<2) {
+				//agent eats fruit
+				float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
+				fruitintake= min(fruit,conf::FRUITINTAKE)*a->stomach[Stomach::FRUIT]*(1-a->stomach[Stomach::MEAT]/2)
+								 *(1-a->stomach[Stomach::PLANT]/2)*(1-a->stomach[Stomach::HAZARD]/2)*speedmul;
+				if (a->health>=conf::MINMOMHEALTH) a->repcounter -= a->metabolism*fruitintake;
+				a->health += fruitintake;
+				cells[Layer::FRUITS][scx][scy]-= min(fruit,conf::FRUITWASTE*fruitintake/conf::FRUITINTAKE);
+			}
+
+			//hazards
+			float hazard= cells[Layer::HAZARDS][scx][scy];
+			float hazardintake= 0;
+			if (hazard>0 && a->health<2){
+				//agent interacts with hazard. Low stomach values for hazard make it poison thats dropped, high values make it food thats eaten
+				if(a->stomach[Stomach::HAZARD]>0.5) {
+					float speedmul= 1-0.5*max(abs(a->w1), abs(a->w2));
+					hazardintake= min(hazard,conf::HAZARDINTAKE)*(a->stomach[Stomach::HAZARD]*2-1)*(1-a->stomach[Stomach::PLANT]/2)
+						*(1-a->stomach[Stomach::MEAT]/2)*(1-a->stomach[Stomach::FRUIT]/2)*speedmul;
+
+					cells[Layer::HAZARDS][scx][scy]-= min(hazard,conf::HAZARDDEPOSIT*hazardintake/conf::HAZARDINTAKE);
+				} else {
+					hazardintake= -conf::HAZARDDAMAGE*hazard*(1-a->stomach[Stomach::HAZARD]*2)
+				}
+				a->health += hazardintake;
+				a->writeIfKilled("Killed by a Hazard");
+			}
+			//agents fill up hazard cells inversely to their hazard stomach below 0.5, and fill only up to 9/10, saving full for events
+			if (modcounter%5==0){
+				if(hazard<conf::HAZARDMAX*9/10) hazard+= conf::HAZARDDEPOSIT*cap(1-a->stomach[Stomach::HAZARD]*2);
+				cells[Layer::HAZARDS][scx][scy]= capm(hazard, 0, conf::HAZARDMAX*9/10);
+			}
+*/
 
 			//land/water
 			float air= cells[Layer::LAND][scx][scy];
@@ -645,9 +734,12 @@ void World::processOutputs()
 		if (agents[i].give>0.5) {
 			for (int j=0; j<(int)agents.size(); j++) {
 				if (agents[j].health<=0) continue; //skip dead agents
+
 				float d= (agents[i].pos-agents[j].pos).length();
+
 				float rd= (agents[i].give-0.5)*2*conf::FOOD_SHARING_DISTANCE;
 				//rd is the max range allowed to agent j, so the agent i can determine how far it shares health
+
 				if (d<rd) {
 					//initiate transfer
 					agents[j].health += conf::FOODTRANSFER;
@@ -669,11 +761,14 @@ void World::processOutputs()
 			for (int j=0; j<(int)agents.size(); j++) {
 				if (i==j) continue;
 				if (agents[j].health<=0){
-					if(a->grabbing>0.5 && a->grabID==agents[j].id) a->grabbing= -1;
+					if(a->grabbing>0.5 && a->grabID==agents[j].id) a->grabbing= -1; //help catch grabbed agents deaths and let the grabber know
 					if(agents[j].health==0) continue; //health == because we want to weed out bots who died already via other causes
 				}
 
 				Agent* a2= &agents[j];
+
+				if (a->pos.x<a2->pos.x-conf::DIST || a->pos.x>a2->pos.x+conf::DIST
+					|| a->pos.y>a2->pos.y+conf::DIST || a->pos.y<a2->pos.y-conf::DIST) continue;
 
 				float d= (a->pos-a2->pos).length();
 				if (d>conf::DIST) continue;
@@ -689,9 +784,17 @@ void World::processOutputs()
 							float DMG= ov*conf::HEALTHLOSS_BUMP;
 							a->health-= DMG*sumrad/2/a->radius; //larger bots take less damage, bounce less
 							a2->health-= DMG*sumrad/2/a2->radius;
+
 							const char * fix= "Killed by a Collision";
 							a->writeIfKilled(fix);
 							a2->writeIfKilled(fix);// fix, because these two collisions are not being redd the same
+
+							if(a->health==0){
+								break;
+								continue;
+							}
+							if(a2->health==0) continue;
+
 							a->initEvent(15,0,0.5,1);
 							a2->initEvent(15,0,0.5,1);
 							
@@ -712,41 +815,10 @@ void World::processOutputs()
 					}
 				} //end collision mechanics
 
-				//---GRABBING---//
-				if(a->grabbing>0.5) {
-					if(d<=conf::GRABBING_DISTANCE+a->radius){
-						//check initializing grab
-						if(a->grabID==-1){
-							if(randf(0,1)<0.4) a->grabID= a2->id; //40% chance we'll grab any bot around us
-
-						} else if (a->grabID==a2->id && d>(sumrad+1.0)) {
-							//grab the coords of the other agent
-							a->grabx= a2->pos.x; a->graby= a2->pos.y;
-							//we have a grab target, and it is this agent. Pull us together!
-							float dpref= sumrad + 1.0;
-							float ff1= -dpref*a2->radius/a->radius*a->grabbing*0.005; //the radii come in here for inertia-like effect
-							float ff2= -dpref*a->radius/a2->radius*a->grabbing*0.005;
-							a->pos.x-= (a2->pos.x-a->pos.x)*ff1;
-							a->pos.y-= (a2->pos.y-a->pos.y)*ff1;
-							a2->pos.x+= (a2->pos.x-a->pos.x)*ff2;
-							a2->pos.y+= (a2->pos.y-a->pos.y)*ff2;
-
-							a->borderRectify();
-							a2->borderRectify();
-						}
-					} else if (a->grabID==a2->id) {
-						//grab distance exceeded, break the bond
-						a->grabID= -1;
-					}
-				} else {
-					//if we can't grab, clear the grab target
-					a->grabID= -1;
-				} //end grab mechanics
-
 				const char * fix2= "Killed by a Murder";
 
 				//---SPIKING---//
-				//low speed doesn't count, nor does a small spike (duh). If the target is jumping in midair, can't attack either
+				//low speed doesn't count, nor does a small spike. If the target is jumping in midair, can't attack either
 				if(d<=(sumrad + conf::SPIKELENGTH*a->spikeLength) && a->w1>=0.1 && a->w2>=0.1 && a2->jump<=0){
 
 					//these two are in collision and agent i has extended spike and is going decent fast!
@@ -759,15 +831,19 @@ void World::processOutputs()
 
 						a2->health-= DMG;
 						a2->writeIfKilled(fix2);
+						a2->freshkill= conf::FRESHKILLTIME; //this agent was hit this turn, giving full meat value
 
 						a->spikeLength= 0; //retract spike back down
 
 						a->initEvent(20*DMG,1,0.5,0); //orange event means bot has spiked the other bot. nice!
-						if (a2->health<=0){ 
+						if (a2->health==0){ 
 							//red event means bot has killed the other bot. Murderer!
 							a->initEvent(20*DMG,1,0,0);
 							a->killed++; //increment stat
+							continue;
 						}
+
+						a->hits++; //increment stat
 
 						/*Vector2f v2(1,0);
 						v2.rotate(a2->angle);
@@ -777,10 +853,6 @@ void World::processOutputs()
 							//this is done so that the other agent cant right away "by accident" attack this agent
 							a2->spikeLength= 0;
 						}*/
-						
-						a2->freshkill= conf::FRESHKILLTIME; //this agent was hit this turn, giving full meat value
-
-						a->hits++; //increment stat
 					}
 				} //end spike mechanics
 
@@ -797,13 +869,48 @@ void World::processOutputs()
 						a2->freshkill= conf::FRESHKILLTIME; //this agent was hit this turn, giving full meat value
 
 						a->initEvent(30*DMG,1,1,0); //yellow event means bot has chomped the other bot. ouch!
-						if (a2->health<=0){ 
+						if (a2->health==0){ 
 							//red event means bot has killed the other bot. Murderer!
 							a->initEvent(30*DMG,1,0,0);
 							a->killed++; //increment stat
+							continue;
 						}
 					}
 				} //end jaw mechanics
+
+				//---GRABBING---//
+				//doing this last because agent deaths may occur up till now
+				if(a->grabbing>0.5 && a2->health>0) {
+					if(d<=conf::GRABBING_DISTANCE+a->radius){
+						//check initializing grab
+						if(a->grabID==-1){
+							if(randf(0,1)<0.4) a->grabID= a2->id; //40% chance we'll grab any bot around us
+							// would like to give bots some way to know who their grabbing and give them the choice
+
+						} else if (a->grabID==a2->id && d>(sumrad+1.0)) {
+							//we have a grab target, and it is this agent. Pull us together!
+							float dpref= sumrad + 1.0;
+							float ff1= -dpref*a2->radius/a->radius*a->grabbing*0.005; //the radii come in here for inertia-like effect
+							float ff2= -dpref*a->radius/a2->radius*a->grabbing*0.005;
+							a->pos.x-= (a2->pos.x-a->pos.x)*ff1;
+							a->pos.y-= (a2->pos.y-a->pos.y)*ff1;
+							a2->pos.x+= (a2->pos.x-a->pos.x)*ff2;
+							a2->pos.y+= (a2->pos.y-a->pos.y)*ff2;
+
+							a->borderRectify();
+							a2->borderRectify();
+
+							//"grab" (hehe) the coords of the other agent
+							a->grabx= a2->pos.x; a->graby= a2->pos.y;
+						}
+					} else if (a->grabID==a2->id) {
+						//grab distance exceeded, break the bond
+						a->grabID= -1;
+					}
+				} else {
+					//if we can't grab, or the other agent died, clear the grab target
+					a->grabID= -1;
+				} //end grab mechanics. DO NOT ADD DEATH CAUSES AFTER THIS
 			}
 		}
 	}
@@ -814,13 +921,7 @@ void World::healthTick()
 	#pragma omp parallel for schedule(dynamic)
 	for (int i=0; i<(int)agents.size(); i++) {
 		if (agents[i].health>0){
-			//remove health from lack of "air"
-			//straight up penalty to all bots for large population
-			agents[i].health-= conf::HEALTHLOSS_NOOXYGEN*agents.size()/conf::TOOMANYBOTS;
-			agents[i].writeIfKilled("Killed by LackOf Oxygen");
-			if (agents[i].health==0) continue; //agent died, we must move on.
-
-			//now for "natural" causes of death: age, metabolism, excesive brain activity
+			//"natural" causes of death: age, metabolism, excesive brain activity
 			//baseloss starts by penalizing fast movement (really should be energy...)
 			float baseloss= conf::HEALTHLOSS_WHEELS*(fabs(agents[i].w1) + fabs(agents[i].w2))/2;
 
@@ -841,6 +942,12 @@ void World::healthTick()
 			//baseloss reduces health
 			agents[i].health -= baseloss;
 			agents[i].writeIfKilled("Killed by Natural Causes"); //this method should be called after every reduction of health
+			if (agents[i].health==0) continue; //agent died, we must move on.
+
+			//remove health from lack of "air"
+			//straight up penalty to all bots for large population
+			agents[i].health-= conf::HEALTHLOSS_NOOXYGEN*agents.size()/conf::TOOMANYBOTS;
+			agents[i].writeIfKilled("Killed by LackOf Oxygen");
 			if (agents[i].health==0) continue; //agent died, we must move on!
 
 			//process temperature preferences
@@ -1022,6 +1129,9 @@ void World::draw(View* view, int layer)
 				} else if (layer==Layer::LAND+1) {
 					//land
 					val = cells[Layer::LAND][x][y];
+				} else if (layer==Layer::LIGHT+1) {
+					//light
+					val = cells[Layer::LIGHT][x][y];
 				}
 /*				} else if (layer==TEMPLAYER) { 
 					//temperature
@@ -1103,7 +1213,7 @@ void World::reproduce(int i1, int i2)
 
 	#pragma omp parallel for ordered schedule(dynamic) //allow the creation of each baby to happen on a new thread
 	for (int i=0;i<agents[i1].numbabies;i++) {
-		Agent daughter = mother.reproduce(father,MR,MR2);
+		Agent daughter= mother.reproduce(father,MR,MR2);
 		
 		#pragma omp ordered //restore order and collapse threads
 		{

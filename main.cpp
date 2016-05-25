@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	//GLUT SETUP
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(30,30);
+	glutInitWindowPosition(250,20);
 	glutInitWindowSize(conf::WWIDTH,conf::WHEIGHT);
 	GLVIEW->win1= glutCreateWindow("Scriptbots");
 

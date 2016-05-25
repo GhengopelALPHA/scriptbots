@@ -91,7 +91,6 @@ void ReadWrite::saveAgent(Agent *a, FILE *file)
 	fprintf(file, "hybrid= %i\n", (int) a->hybrid);
 	fprintf(file, "cl1= %f\ncl2= %f\n", a->clockf1, a->clockf2);
 	fprintf(file, "smellmod= %f\n", a->smell_mod);
-	fprintf(file, "soundmod= %f\n", a->sound_mod);
 	fprintf(file, "hearmod= %f\n", a->hear_mod);
 	fprintf(file, "bloodmod= %f\n", a->blood_mod);
 	fprintf(file, "eyesensemod= %f\n", a->eye_see_agent_mod);
@@ -107,6 +106,8 @@ void ReadWrite::saveAgent(Agent *a, FILE *file)
 		fprintf(file, "<e>\n");
 		fprintf(file, "ear#= %i\n", q);
 		fprintf(file, "eardir= %f\n", a->eardir[q]);
+		fprintf(file, "hearlow= %f\n", a->hearlow[q]);
+		fprintf(file, "hearhigh= %f\n", a->hearhigh[q]);
 		fprintf(file, "</e>\n");
 	}
 	fprintf(file, "numbabies= %i\n", a->numbabies);
@@ -118,7 +119,7 @@ void ReadWrite::saveAgent(Agent *a, FILE *file)
 //	fprintf(file, "ir= %f\nig= %f\nib= %f\n", a->ir, a->ig, a->ib);
 //	fprintf(file, "give= %f\n", a->give);
 	fprintf(file, "mutrate1= %f\nmutrate2= %f\n", a->MUTRATE1, a->MUTRATE2);
-	fprintf(file, "freshkill= %f\n", a->freshkill);
+	fprintf(file, "freshkill= %i\n", a->freshkill);
 	fprintf(file, "<b>\n"); //signals the writing of the brain (more for organization than proper loading)
 
 	for(int b=0;b<BRAINSIZE;b++){
@@ -148,13 +149,9 @@ void ReadWrite::saveAgent(Agent *a, FILE *file)
 
 void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *filename)
 {
+	//Some Notes: When this method is called, it's assumed that filename is not blank or null
 	char address[32];
 	printf("Filename %s given. Saving...\n", filename);
-	//if no filename given, use default
-	if(filename=="" || filename==0){
-		filename= ourfile;
-		printf("CAUTION: No filename given. Loading default %s instead.\n", ourfile);
-	}
 
 	strcpy(address,"saves\\");
 	strcat(address,filename);
@@ -192,7 +189,7 @@ void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *file
 			if (meat>0) fprintf(fs, "meat= %f\n", meat);
 			if (hazard>0) fprintf(fs, "hazard= %f\n", hazard);
 			if (fruit>0) fprintf(fs, "fruit= %f\n", fruit);
-			fprintf(fs, "land= %i\n", land);
+			if (land>0) fprintf(fs, "land= %i\n", land);
 			fprintf(fs,"</c>\n");
 		}
 	}
@@ -231,7 +228,7 @@ void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *file
 		}
 		fclose(ft);
 
-		printf("Old report.txt found, and its last epoch was %i.\n", maxepoch);
+		if(world->isDebug()) printf("Old report.txt found, and its last epoch was %i.\n", maxepoch);
 		
 		//now compare the max epoch from original with the first entry of the new
 		if(fr){
@@ -240,11 +237,11 @@ void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *file
 			sscanf(line, "%s%i%*s", &text, &epoch);
 			if (strcmp(text, "Epoch:")==0) {
 				//if it is, we append, because this is (very likely) a continuation of that save
-				printf("our report.txt starts at epoch %i, ", epoch);
+				if(world->isDebug())printf("our report.txt starts at epoch %i, ", epoch);
 				if (epoch==maxepoch || epoch==maxepoch+1){
 					append= true;
-					printf("so we will append the new report data!\n");
-				} else printf("so we are replacing the old report.txt data.\n");
+					if(world->isDebug()) printf("so we will append the new report data!\n");
+				} else if(world->isDebug()) printf("so we are replacing the old report.txt data.\n");
 			}
 			rewind(fr);
 		}
@@ -270,6 +267,7 @@ void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *file
 
 void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, const char *filename)
 {
+	//Some Notes: When this method is called, it's assumed that filename is not blank or null
 	char address[32];
 	char line[64], *pos;
 	char var[16];
@@ -278,7 +276,7 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 	int cyl= 0;
 	int mode= -1;//loading mode: -1= off, 0= world, 1= cell, 2= agent, 3= box, 4= connection, 5= eyes, 6= ears
 
-	Agent xa; //mock agent. should get moved and deleted after loading
+	Agent xa; //mock agent. gets moved and deleted after loading
 	bool trigger= false;
 
 	int eyenum= -1; //counters
@@ -288,19 +286,13 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 	int i; //integer buffer
 	float f; //float buffer
 
-	//if no filename given, use default
-	if(filename=="" || filename==0){
-		filename= ourfile;
-		printf("CAUTION: No filename given. Loading default %s instead.\n", ourfile);
-	}
-
 	strcpy(address,"saves\\");
 	strcat(address,filename);
 
 	FILE *fl;
 	fl= fopen(address, "r");
 	if(fl){
-		printf("file exists! loading."); //report status
+		printf("file exists! loading.");
 		while(!feof(fl)){
 			fgets(line, sizeof(line), fl);
 			pos= strtok(line,"\n");
@@ -399,7 +391,7 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 				if(strcmp(var, "</agent>")==0 || strcmp(var, "</a>")==0){
 					//end_agent tag is checked for, and when found, copies agent xa
 					mode= 0;
-					Agent loadee = xa;
+					Agent loadee= xa;
 					loadee.id= world->idcounter;
 					world->idcounter++;
 					world->agents.push_back(loadee);
@@ -458,9 +450,6 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 				}else if(strcmp(var, "smellmod=")==0){
 					sscanf(dataval, "%f", &f);
 					xa.smell_mod= f;
-				}else if(strcmp(var, "soundmod=")==0){
-					sscanf(dataval, "%f", &f);
-					xa.sound_mod= f;
 				}else if(strcmp(var, "hearmod=")==0){
 					sscanf(dataval, "%f", &f);
 					xa.hear_mod= f;
@@ -526,6 +515,12 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 				}else if(strcmp(var, "eardir=")==0){
 					sscanf(dataval, "%f", &f);
 					xa.eardir[earnum]= f;
+				}else if(strcmp(var, "hearlow=")==0){
+					sscanf(dataval, "%f", &f);
+					xa.hearlow[earnum]= f;
+				}else if(strcmp(var, "hearhigh=")==0){
+					sscanf(dataval, "%f", &f);
+					xa.hearhigh[earnum]= f;
 				}
 			}else if(mode==3){ //mode @ 3 = brain box (of agent)
 				if(strcmp(var, "</box>")==0 || strcmp(var, "</x>")==0){

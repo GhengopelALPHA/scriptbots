@@ -12,39 +12,24 @@
 using namespace std;
 Agent::Agent()
 {
-	//randomly spawned bots get the following attributes:
+	//basics
+	id= 0;
 	pos= Vector2f(randf(0,conf::WIDTH),randf(0,conf::HEIGHT));
 	angle= randf(-M_PI,M_PI);
 	health= 1+randf(0.5,0.75);
-	age=0;
-	species=randi(-conf::NUMBOTS*200,conf::NUMBOTS*200); //related to numbots because it's a good relationship
+	age= 0;
+	MUTRATE1= randf(0.1, 0.15); //0.08; //chance of mutations occuring
+	MUTRATE2= 0.007; //randf(0.001, 0.01); //severity of mutations
 	radius= randf(conf::MEANRADIUS*0.2,conf::MEANRADIUS*2.2);
-	spikeLength= 0;
-	jawPosition= 0;
-	grabID= -1;
-	grabbing= 0;
-	red= 0.5;
-	gre= 0.5;
-	blu= 0.5;
-	w1=0;
-	w2=0;
-	volume=1;
-	give=0;
-	clockf1= randf(5,100);
-	clockf2= randf(5,100);
-	boost=false;
-	jump= 0;
-	indicator=0;
-	gencount=0;
-	ir=0;
-	ig=0;
-	ib=0;
+
+	//triggers, counters, and layer interaction
+	freshkill= 0;
+	species= randi(-conf::NUMBOTS*200,conf::NUMBOTS*200); //related to numbots because it's a good relationship
+	gencount= 0;
+	repcounter= conf::REPRATE;
+	numbabies= randi(1,4);
 	temperature_preference= cap(randn(2.0*abs(pos.y/conf::HEIGHT - 0.5),0.05));
 	lungs= randf(0,1);
-	hybrid= false;
-	numbabies= randi(1,4);
-	sexproject= false;
-	repcounter= conf::REPRATE;
 	metabolism= 1.0;//randf(0.5,2);
 
 	float herb,carn,frui;
@@ -60,30 +45,9 @@ Agent::Agent()
 		cap(stomach[overtype]);
 	}
 
-	id=0;
-	
-	smell_mod= randf(0.1, 3);
-	sound_mod= randf(0.1, 3);
-	hear_mod= randf(0.1, 3);
+	//senses and sense-ability
+	//eyes
 	eye_see_agent_mod= randf(0.1, 3);
-//	eye_see_cell_mod= randf(0.1, 2);
-	blood_mod= randf(0.1, 3);
-	
-	MUTRATE1= randf(0.08, 0.12); //chance of mutations occuring
-	MUTRATE2= 0.005; //randf(0.001, 0.01); //severity of mutations
-
-	freshkill= 0;
-	
-	in.resize(Input::INPUT_SIZE, 0);
-	out.resize(Output::OUTPUT_SIZE, 0);
-
-	brainact= 0;
-	
-	eardir.resize(NUMEARS, 0);
-	for(int i=0;i<NUMEARS;i++) {
-		eardir[i] = randf(0, 2*M_PI);
-	}
-
 	eyefov.resize(NUMEYES, 0);
 	eyedir.resize(NUMEYES, 0);
 	for(int i=0;i<NUMEYES;i++) {
@@ -91,11 +55,64 @@ Agent::Agent()
 		eyedir[i] = randf(0, 2*M_PI);
 	}
 
+	//ears
+	hear_mod= randf(0.1, 3);
+	eardir.resize(NUMEARS, 0);
+	hearlow.resize(NUMEARS, 0);
+	hearhigh.resize(NUMEARS, 0);
+	for(int i=0;i<NUMEARS;i++) {
+		eardir[i]= randf(0, 2*M_PI);
+		float temp1= randf(0,1);
+		float temp2= randf(0,1);
+		if(temp1>temp2){
+			hearlow[i]= temp2;
+			hearhigh[i]= temp1;
+		} else {
+			hearlow[i]= temp1;
+			hearhigh[i]= temp2;
+		}
+	}
+	clockf1= randf(5,100);
+	clockf2= randf(5,100);
+	clockf3= 2;
+	blood_mod= randf(0.1, 3);
+	smell_mod= randf(0.1, 3);
+
+	//brain matters
+	in.resize(Input::INPUT_SIZE, 0);
+	out.resize(Output::OUTPUT_SIZE, 0);
+	brainact= 0;
+
+	//output mechanical values
+	w1= 0;
+	w2= 0;
+	boost= false;
+	jump= 0;
+	red= 0.5;
+	gre= 0.5;
+	blu= 0.5;
+	volume= 1;
+	tone= 0.5;
+	give= 0;
+	spikeLength= 0;
+	jawPosition= 0;
+	jawOldPos= 0;
+	grabID= -1;
+	grabbing= 0;
+	sexproject= false;
+
+	//stats
+	hybrid= false;
+	death= "Killed by Unknown Factor!"; //default death message, just in case
 	children= 0;
 	killed= 0;
 	hits= 0;
-
-	death= "Killed by Unknown Factor!"; //default death message, just in case
+	indicator= 0;
+	ir= 0;
+	ig= 0;
+	ib= 0;
+	jawrend= 0;
+	dfood= 0;
 }
 
 void Agent::printSelf()
@@ -164,20 +181,21 @@ Agent Agent::reproduce(Agent that, float MR, float MR2)
 	a2.clockf1= randf(0,1)<0.5 ? this->clockf1 : that.clockf1;
 	a2.clockf2= randf(0,1)<0.5 ? this->clockf2 : that.clockf2;
 
-	a2.smell_mod = randf(0,1)<0.5 ? this->smell_mod : that.smell_mod;
-	a2.sound_mod = randf(0,1)<0.5 ? this->sound_mod : that.sound_mod;
-	a2.hear_mod = randf(0,1)<0.5 ? this->hear_mod : that.hear_mod;
-	a2.eye_see_agent_mod = randf(0,1)<0.5 ? this->eye_see_agent_mod : that.eye_see_agent_mod;
-//	a2.eye_see_cell_mod = randf(0,1)<0.5 ? this->eye_see_cell_mod : that.eye_see_cell_mod;
-	a2.blood_mod = randf(0,1)<0.5 ? this->blood_mod : that.blood_mod;
+	a2.smell_mod= randf(0,1)<0.5 ? this->smell_mod : that.smell_mod;
+	a2.hear_mod= randf(0,1)<0.5 ? this->hear_mod : that.hear_mod;
+	a2.eye_see_agent_mod= randf(0,1)<0.5 ? this->eye_see_agent_mod : that.eye_see_agent_mod;
+//	a2.eye_see_cell_mod= randf(0,1)<0.5 ? this->eye_see_cell_mod : that.eye_see_cell_mod;
+	a2.blood_mod= randf(0,1)<0.5 ? this->blood_mod : that.blood_mod;
 
 	a2.temperature_preference= randf(0,1)<0.5 ? this->temperature_preference : that.temperature_preference;
 	a2.lungs= randf(0,1)<0.5 ? this->lungs : that.lungs;
 	
-	a2.eardir = randf(0,1)<0.5 ? this->eardir : that.eardir;
+	a2.eardir= randf(0,1)<0.5 ? this->eardir : that.eardir;
+	a2.hearlow= randf(0,1)<0.5 ? this->hearlow : that.hearlow;
+	a2.hearhigh= randf(0,1)<0.5 ? this->hearhigh : that.hearhigh;
 
-	a2.eyefov = randf(0,1)<0.5 ? this->eyefov : that.eyefov;
-	a2.eyedir = randf(0,1)<0.5 ? this->eyedir : that.eyedir;
+	a2.eyefov= randf(0,1)<0.5 ? this->eyefov : that.eyefov;
+	a2.eyedir= randf(0,1)<0.5 ? this->eyedir : that.eyedir;
 
 	//mutations
 	if (randf(0,1)<MR/10) a2.numbabies= (int) (randn(a2.numbabies, MR2*40));
@@ -201,7 +219,6 @@ Agent Agent::reproduce(Agent that, float MR, float MR2)
 	if (a2.clockf2<2) a2.clockf2= 2;
 
 	if (randf(0,1)<MR) a2.smell_mod= randn(a2.smell_mod, MR2);
-	if (randf(0,1)<MR) a2.sound_mod= randn(a2.sound_mod, MR2);
 	if (randf(0,1)<MR) a2.hear_mod= randn(a2.hear_mod, MR2);
 	if (randf(0,1)<MR) a2.eye_see_agent_mod= randn(a2.eye_see_agent_mod, MR2);
 //	if (randf(0,1)<MR) a2.eye_see_cell_mod= randn(a2.eye_see_cell_mod, MR2);
@@ -214,9 +231,16 @@ Agent Agent::reproduce(Agent that, float MR, float MR2)
 		if(randf(0,1)<MR*2) a2.eardir[i] = randn(a2.eardir[i], MR2*5);
 		if(a2.eardir[i]<0) a2.eardir[i] = 0;
 		if(a2.eardir[i]>2*M_PI) a2.eardir[i] = 2*M_PI;
+		if(randf(0,1)<MR) a2.hearlow[i]= randn(a2.hearlow[i], MR2);
+		if(randf(0,1)<MR) a2.hearhigh[i]= randn(a2.hearhigh[i], MR2);
+		if (a2.hearlow[i]>a2.hearhigh[i]) {
+			float temp= a2.hearlow[i];
+			a2.hearlow[i]= a2.hearhigh[i];
+			a2.hearhigh[i]= temp;
+		}
 	}
 
-	#pragma omp parallel for
+//	#pragma omp parallel for
 	for(int i=0;i<NUMEYES;i++){
 		if(randf(0,1)<MR) a2.eyefov[i] = randn(a2.eyefov[i], MR2/2);
 		if(a2.eyefov[i]<0) a2.eyefov[i] = 0;
@@ -232,7 +256,7 @@ Agent Agent::reproduce(Agent that, float MR, float MR2)
 	a2.brain= this->brain.crossover(that.brain);
 	a2.brain.initMutate(MR,MR2);
 
-	a2.initEvent(10,0.8,0.8,0.8); //grey event means we were just born! Welcome!
+	a2.initEvent(20,0.8,0.8,0.8); //grey event means we were just born! Welcome!
 	
 	return a2;
 
@@ -263,15 +287,16 @@ void Agent::setPos(float x, float y)
 {
 	this->pos.x= x;
 	this->pos.y= y;
+	this->borderRectify();
 }
 
 void Agent::borderRectify()
 {
 	//if this agent has fallen outside of the world borders, rectify and wrap him to the other side
-	if (this->pos.x<0)			  this->pos.x= this->pos.x + conf::WIDTH;
-	if (this->pos.x>conf::WIDTH)  this->pos.x= this->pos.x - conf::WIDTH;
-	if (this->pos.y<0)			  this->pos.y= this->pos.y + conf::HEIGHT;
-	if (this->pos.y>conf::HEIGHT) this->pos.y= this->pos.y - conf::HEIGHT;
+	if (this->pos.x<0)			  this->pos.x= this->pos.x + conf::WIDTH*((int)((0-this->pos.x)/conf::WIDTH)+1);
+	if (this->pos.x>=conf::WIDTH)  this->pos.x= this->pos.x - conf::WIDTH*((int)((this->pos.x-conf::WIDTH)/conf::WIDTH)+1);
+	if (this->pos.y<0)			  this->pos.y= this->pos.y + conf::HEIGHT*((int)((0-this->pos.y)/conf::HEIGHT)+1);
+	if (this->pos.y>=conf::HEIGHT) this->pos.y= this->pos.y - conf::HEIGHT*((int)((this->pos.y-conf::HEIGHT)/conf::HEIGHT)+1);
 }
 
 bool Agent::isHerbivore()

@@ -35,6 +35,10 @@ public:
 	virtual void drawCell(int x, int y, float quantity); //draws the background boxes
 	virtual void drawData(); //draws info in the left side of the sim
 	virtual void drawStatic(); //draws viewer-static objects
+
+	virtual void trySaveWorld(bool autosave= false); //called by world, starts GLView working on saving the world
+//	virtual void trySaveAgent(); //starts GLView working on saving selected agent
+//	virtual void tryLoadAgent(); //loads up an agent from a file
 	
 	void setWorld(World* w);
 	
@@ -65,10 +69,11 @@ private:
 	int live_paused; //are we paused?
 	int live_fastmode; //are we drawing?
 	int live_skipdraw; //are we skipping some frames?
-	int live_agentsvis; //are we drawing agents? If so, what's the scheme? 0= agents hidden, 1= normal, 2= stomach, 3= temp discomfort, 4= sound
-	int live_layersvis; //what cell layer is currently active? 0= off, 1= plant food, 2= meat, 3= hazards, 4= fruit, 5= land
-	int live_selection; //what bot catagory are we currently trying to autoselect? 0= manual, 1= oldest, 3= best gen, 4= healthiest, 5= productive
+	int live_agentsvis; //are we drawing agents? If so, what's the scheme? see namespace "Visuals" in settings.h for details
+	int live_layersvis; //what cell layer is currently active? see namespace "Layers" in settings.h
+	int live_selection; //what bot catagory are we currently trying to autoselect? see namespace "Select" in settings.h
 	int live_follow; //are we following the selected agent?
+	int live_autosave; //are we allowing autosaves?
 
 	int live_debug; //are we debugging?
 	bool debug;

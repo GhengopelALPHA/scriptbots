@@ -1,3 +1,64 @@
+5/25/2016:
++ Added a sun. New layer: light. Sinusoid function over time and x axis, recreates day and night.
+  * Bots in night cannot see and see a base 0.5 input in day.
+  * New display and settings.h var, FRAMES_PER_DAY, to control the speed.
++ New output and input: Clock 3. Works like other clocks, except its frequency is determined by an output, in range [0,1] -> [100,2]
+  changes to clock 3's frequency are not instant.
++ Vocalization broadened: new "tone" output used with volume to produce sounds. Hearing rebuilt to include ranges for each ear
+  * Tone from other agents are only "heard" fully when they fall within the range defined by "hearlow" and "hearhigh"
+  * Tones falling just inside of hearing ranges (to a tone difference set by settings.h) will be heard, but at reduced volume
+  * All sounds heard are merged into one input. Resolution and tone differentiation can come with ear pairs, or later, more ear structures
++ Added new Visual: Agent Health. Will display agents with full health as green, half-health as blinking orange, and almost dead
+  as blinking black and red. Slower blinking means slower health loss/gain
++ Added Autosaving. At the end of every epoch, the world is saved in AUTOSAVE.SCB. Disableable while program is running with UI
++ Added several DEBUG features:
+  * Selected agents show DIST circle - the range of most senses, cell smell zone - area within cells are counted for the cell smell
+    input, food sharing distance, grabbing distance, and spike zone of effect
+  * All bots display wheel speeds via green bars showing the output speed of each wheel originating at the real position of the wheels
+  = The brain box display has been moved to be a DEBUG feature only
+  = Some saving and loading printf's changed to debug only
+
+- Sound sensor removed. All agents emit a "low-pitched" sound picked up by bots with hearing at a tone of 0.25
+- Removed Choice: bot output that effects every box through their last connection has been eliminated. Reason being it's just
+  so influential on every output that I can't imagine a proper use for it, and every use of it seen so far has been seizuring agents.
+
+= Increased DIST
+= Agent eyes increased from 4 to 6
+= Brain mutation chances adjusted. Goal is to get more chance of species improvement by letting inputs and connections get jostled more
+= Changed the population size of bots where random spawns stop occuring from 100 to 500
+= Bots now see 0.5 light minimum during "day", are blind during "night" and must rely on other senses
+= Init mutation rates increased. From studies on the origins of our own life, if an RNA world was the start, mutations were rampant
+= Changed stomach multipliers for having high values of two or more food types: max intake available to an agent with two high values is .25
+= Jaws aren't rendered if a timeout period has passed and they haven't triggered. Spikes aren't rendered if incapable of harming other
+  agents
+= Visualization of "volume" changed: bots are colored according to volume, sound wave color and count according to tone
+  * Tone when expressed as color: red is low frequency, green is middle, blue is high
+= Visualization of bot inputs and outputs labeled at close zooms:
+  * Clocks have a black "Q", temp discomfort has orange "H", hearing have white "E"s
+  * red,gre,blu bot color outputs colored respectively, jump is yellow, tone as above, Wheels have green "!", clock3 has black "Q",
+    sexual projection has purple "P", volume has white "V", and spike has red "S"
+  * Eventually all outputs will have other graphical representations, and the input and out vis will be a debug feature
+= Optimizations
+= Changed agent constructor to simplify in cases of babies, so that time is not wasted trying to make random values that are then replaced
+= FIXED Agents being saved would not properly record "freshkill" in integer format
+= FIXED center scene 'q' feature not zooming and centering properly on window sizes other than default
+= FIXED lag issues when new agents would be created. Add agents, world init and resets, and birth events no longer stall program
+=? FIXED very rare issue where, upon processing an agent that happened to be at exactly WIDTH or HEIGHT in x or y, the code would try to get
+  the cell values of the N+1th cell, which doesn't exist
+
+Old Saves:
+BROKEN! On account of loss of sound sensors and the addition of new inputs and outputs, old saves will not work as intended.
+New eyesight and hearing code, and lack of choice, will make all previous agent systems that relied on these features break compleately.
+
+
+
+3/30/2016 b:
+Features:
+= Fixed typos in death log key in Agents.cpp
+= Fixed Release version bugs. This version is now fully released into the wild!
+
+
+
 3/30/2016:
 Features:
 + Added grabbing: new output, if over 0.5, activates and pulls together a nearby target bot. If pulled too far, the 
@@ -39,119 +100,6 @@ Simulation:
 Old Saves:
 BROKEN! On account of new features for bots - grabbing and jaws,new input - random, and changed physical constants - REACTPOWER and
  FRESHKILLTIME, old saves will not preserve the situation. With regard to freshkill, old saves are not compatable
-
-
-
-
-NEAR FUTURE:
-**Make giving and grabbing visualization clearer: 
- *Make pulsating lines with directional indication, thickness/brightness related to amount given
- *Make a pair of blue lines drawn like a clamp facing forward, then both dirrected at target
---graphically impossible with current agent data: no way to know where to draw the other end of the graph...
-***Add creative functionality (copy & place bots, place/remove food, etc)
-**Add autosave feature, [which auto loads upon restart]
---would have to be defined in either main or world, GLView would probably not be able to handle it through ReadWrite...
-***Add bot visualization features:
-  *Sexuality: deep blue for only sexual projection, yellow-ish for sex-projection-capable, and green for budding only
-***more types of "spikes":
-   +Red: regular, speed-collision-based damage. ADDED: Spikes
-   ***Yellow: proximity w/ output change damage. NAME: Jaws
-   +Blue: Grab, attach to one other bot and follow. ADDED: Grab
-   Green: Takes health from touching bots in front. NAME: Leach
-   Purple: DNA exchange, live crossover event. NAME: Conjugation
-***Health Max a bot variable, min 1, max 10, all init bots get 1-3
- *graphically segment health bars (0.5 increments will do)
-***When agent dies, lasthealth is converted into meat. Starved creatures return none, loss of energy bots return any,
-   spiked/attacked bots return lots. Can then remove special output code
-***Draw Grid option. Draws a grid over the cell layer
-
-Redo GUI, eliminate broken GLUI dependence, make new GUI in static frame, make buttons, methods, etc
-Complete features already ingame:
-* Variable bot radii:
-  *Make food collection take food from points at the bot's surface. either 2, mutable location mouths, or 4 cardinal point checks
-  *
-* Bot variation/differentiation (the primary goal of this sim):
-  *provide ways for temp prefference, stomach, etc, to change for an individual
-    *outputs that allow changes? Force changes? Natural adjustment?
-  *Add more localized threats:
-    *Lightning. Instant localized effect, makes loud sound, bright light, and damages bots
-    *Gamma rays. Instant localized effect, mutates bots slightly
-    *Cliffs? Volcanoes? Deserts?
-* Store more report data, show more on the in-game graph, and generate more bot-carried stats
-  *Average non-zero generation & average age (for report)
-  *Omnivores (report & graph)
-  *Spike-wielding (graph)
-  *Stimulated? 
-  *health/movement ratio?
-Add new modes/selection features:
- *Select agent mode: AS CURRENT, places an info box in the top right corner, w/ stomach, brain, species #, mutrates, metabolism, Health,
-   and other stats. Agent saving to be accessed here? (or at least enabled while selection is active.)
- *Place Agent mode: left-clicking places random agents around location
- *Select cell mode: left-clicking reports the cell's contents, x/y location, temperature, and terrain type (report or draw?)
-Wheels, Legs, fins, wings dichonomy for different types of movement. Wheels as is. Legs similar to jump in that they must recharge after
- activating. Fins as wheels but for water use (if land/water layer used). Wings as wheels but for all land types
- Also, further environment dichonomy: water vs air. Air bots don't loose health on water cells if jumping. Water bots move slowly on
- land.
-more land types:
- *desert: applies a straight temp discomfort penalty to all bots. value= 0.8
- *mountain: halves bot movement when in a cell with it. value= 0.9
-(more debug code)
-make temp cell based again, this time have bot trait: bloodedness:(0,1). greater values moves temp of cell toward the temp pref
- *temp raised by multiple bots in proximity (2+ in same cell?)
-
-DISTANT FUTURE:
-
-Migrate to JAVA. The sooner the better, because the current build is not working elsewhere.
-
-Create main menu, allowing creation of new worlds, loading saved worlds, and load new settings, before sim start
-Armor: Bot var. range [0,1] with 0 being none, 0.5+ being visualized, and 1 giving complete protection.
- Modifies bot's speed such that a bot with armor of 1 will never move.
- bots with armor will take that amount less damage
-  A perfect 1 will not protect from:
-   *Bots with full-length spike traveling at .5 speed
-   *Bots at full speed with 0.5 spike
-   *some linear mixture in between the above)
-Low health disables jump/boost
-Make World loading reset settings such as INPUTSIZE, WIDTH, etc, via making those world vars
-Difference in speed as determining factor of spike injuries, not just attacking bot's speed
-possible follow reasons (like oldest or selected):
-  fastest (bot with greatest total wheel speed)
-possible bot functions (like spike, boost and jump):
-possible brain outputs:
-  Reproduce: lets a prepared agent reproduce. (TOO MUCH SELECTION PRESSURE)
-  Intake: allows intake fuctions from cells (TOO MUCH SELECTION PRESSURE)
-  Clock 3 Frequency: Sets the frequency of a third clock.
-possible brain inputs:
-  Touch: activates with other bots being at d<=r1+r2[+hair]
-  Age: reports fraction of MAXAGE that the bot is (agent.age/MAXAGE, limit [0,1])
-  Clock 3: a clock with a frequency determined by a bot's output
-possible layers:
-  Sunlight: sinusoidial function of modcounter that cycles around the world along the x-axis. Plants have better chances of spread in
-  sun, and bots in darkness cannot see (with a full FOR loop disable; performance increases should be expected)
-  Elevation: formations of incremented (in 0.01, thus 100 sepparate levels) "elevation," with randomly generated flatness and uneven
-   spots. Bots cannot cross a difference of 10 levels (unless jump gets involved...). Sight should be effected somehow.
-reproduction as a countdown that's only allowed to begin once "dna" exchange has been acknowledged
-  So, making a baby could use grab to "raise" children from creation (either budding due to full health trigger,
-  or standard crossover) till countdown reaches zero. REPRESENTS: the gathering of resources to grow the child.
-
-CRAZY IDEAS:
-***STICKS! make them grey, short, and visible by two endpoints. Collision enabled with bots, not each other, and thick
-***Energy. New bot var and mechanic with display bar. Fill rate inverse to wheel speed, used to reproduce, boost, raise
-   spike, jump, and think rapidly (brainact). Agents loose health quickly when energy=0. Max energy helps regenerate health
-***New Event messages: short messages summing up significant events (population booms, busts, selected agent dieing, last member of species
-   dieing, food booms, busts. Could be used to add more global events which are easily explicable (droughts (less fruit growth), 
-   Monsoons (more fruit growth), Gamma Ray Bursts (live mutation chances), Large Hazards (hazard random events effect large area), etc)
-   Major point of this feature would be event storing: every event that occurs while in fast mode is recorded, and only upon normal
-   speed, displayed with a rolling disapearing act (events that happened first are removed from record and display as if expecting
-   user to be reading them)
-***New Follow Feature: Genome: after an agent has been selected, its species number is recorded by the world. When the selected agent
-   has a child(ren), it is selected automaticly (randomly). If the selected agent ever dies, the selection is passed to a random agent
-   with the closest match to the recorded species number, and the new species number is recorded. 
-Temperature experienced is higher than normal with close proximity to other bots
-create function to allow bots to seed food cells; will combine with grab later
-consider becoming more species-oriented, with new class and program structure
-Remotely-located mouth and waste depositor, with bot vars containing the angles. food can only be consumed under the mouth, waste can only build up under the depositor
-Chemical layers: add things like noxious gas (health reduction, global average), volitile gas (bonus growth, fire), etc
 
 
 
