@@ -1,2 +1,0 @@
-#define HAVE_OPENMP
-#define LOCAL_GLUT32
