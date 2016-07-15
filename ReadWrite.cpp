@@ -237,17 +237,17 @@ void ReadWrite::saveWorld(World *world, float xpos, float ypos, const char *file
 			sscanf(line, "%s%i%*s", &text, &epoch);
 			if (strcmp(text, "Epoch:")==0) {
 				//if it is, we append, because this is (very likely) a continuation of that save
-				if(world->isDebug())printf("our report.txt starts at epoch %i, ", epoch);
+				if(world->isDebug())printf("Our report.txt starts at epoch %i. ", epoch);
 				if (epoch==maxepoch || epoch==maxepoch+1){
 					append= true;
-					if(world->isDebug()) printf("so we will append the new report data!\n");
-				} else if(world->isDebug()) printf("so we are replacing the old report.txt data.\n");
+					printf("Old report.txt exists. Continuing it.\n");
+				} else printf("Old report.txt found. Replacing it.\n");
 			}
 			rewind(fr);
 		}
 		//otherwise, we overwrite!
 	} else {
-		printf("No old report.txt found. Continuing");
+		printf("No old report.txt found. Continuing\n");
 	}
 	
 	ft = append ? fopen(address, "a") : fopen(address, "w");
@@ -277,7 +277,7 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 	int mode= -1;//loading mode: -1= off, 0= world, 1= cell, 2= agent, 3= box, 4= connection, 5= eyes, 6= ears
 
 	Agent xa; //mock agent. gets moved and deleted after loading
-	bool trigger= false;
+	bool t1= false, t2= false;
 
 	int eyenum= -1; //counters
 	int earnum= -1;
@@ -292,7 +292,7 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 	FILE *fl;
 	fl= fopen(address, "r");
 	if(fl){
-		printf("file exists! loading.");
+		printf("file exists! loading.\n");
 		while(!feof(fl)){
 			fgets(line, sizeof(line), fl);
 			pos= strtok(line,"\n");
@@ -303,7 +303,7 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 					//if we find a <world> tag, enable world loading and reset. simple
 					mode= 0;
 					world->reset();
-					printf("."); //report status
+					printf("discovered world.\n"); //report status
 				}else if(strcmp(var, "<agent>")==0 || strcmp(var, "<a>")==0){
 					//if we find an <agent> tag, jump right to agent loading (for spawning saved agents)
 					mode= 2;
@@ -342,7 +342,6 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 					sscanf(dataval, "%i", &i);
 					if (i==1) world->setClosed(true);
 					else world->setClosed(false);
-					printf("."); //report status
 				}else if(strcmp(var, "xpos=")==0){
 					//veiw screen location x
 					sscanf(dataval, "%f", &f);
@@ -358,8 +357,8 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 				}else if(strcmp(var, "<agent>")==0 || strcmp(var, "<a>")==0){
 					//agent tag activates agent reading mode
 					mode= 2;
-					if (!trigger) printf("."); //report status
-					trigger= true;
+					if (!t1) printf("loaded cells.\n"); //report status
+					t1= true;
 				}
 			}else if(mode==1){ //mode @ 1 = cell
 				if(strcmp(var, "</cell>")==0 || strcmp(var, "</c>")==0){
@@ -395,6 +394,10 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 					loadee.id= world->idcounter;
 					world->idcounter++;
 					world->agents.push_back(loadee);
+					if(!t2 && randf(0,1)>world->NUMBOTS/world->agents.size()){
+						printf("halfway there.\n");
+						t2= true;
+					}
 				}else if(strcmp(var, "posx=")==0){
 					sscanf(dataval, "%f", &f);
 					xa.pos.x= f;
@@ -570,10 +573,10 @@ void ReadWrite::loadWorld(World *world, float &xtranslate, float &ytranslate, co
 				}
 			}
 		}
-		printf(".\n"); //report status
+		printf("loaded agents.\n"); //report status
 		fclose(fl);
 
-		printf("World Loaded Successfully!\n");
+		printf("WORLD LOADED!\n");
 
 		world->setInputs();
 		world->brainsTick();

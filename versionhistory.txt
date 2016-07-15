@@ -1,3 +1,43 @@
+7/15/2016:
+Version 1.2-ALPHA
++ SETTINGS.CFG! Finally, .exe users can modify some core constants of the sim! Currently limited to world constants.
+  *Does ~NOT~ include agent, brain, or box constants, like MEANRADIUS, BRAIN_DEADCONNS, or CONNS.
+  *If missing, will be generated at world creation (launch, reset, or loading), using settings.h values
+  *Works like ReadWrite and doesn't need every entry to work. Instead scans the .cfg, and if it finds a flag, changes it.
+   Make your .cfg's as small and efficient as you like! Please note that deleted flags won't be regenerated unless the whole file is missing.
+  *Every run, all constants are first loaded from settings.h, and then settings.cfg resets ones it has flags for.
+  *Syntax is similar to saveworlds: eg, "NUMBOTS= 30". Any spaces and content after are ignored. Any text lines that aren't a flag are ignored.
+  *Only the last value is used for duplicate flags. Most flags are float format, but some are integers. Respect the obvious differences and no
+   errors should occur
+  -Doesn't use ReadWrite module. For those who are like me and appreciate a place for these kind of things, this will bother you. I'll work on it
+  *To other programmers: please use care when making .cfg settings. First a new world variable must be declared. Then initialized with a
+   settings.h value, which should get printed to the .cfg when writeConfig() is called (order doesn't matter), and finally you must add code
+   to readConfig() to get any changes pushed to the world variables. IT IS EASY TO FORGET ONE OF THESE STEPS AND THE ERROR CAN GO UNNOTICED
+  *All future changes to constants in versionhistory.txt will be to the default values. if you keep your old config files when updating to
+   newer versions, your values will persist, and any new constants added will use defaults.
+  * For details, search ".cfg" in the project
+
+= Range of cell smell inputs reduced to DIST/2
+= Meat cell decay now inversely proportional to the remaining meat as a RATIO of MEATMAX, rather than the raw value
+= FRUITREQUIRE default set to 0; trying to sepparate herbivores and frugivores, prevent them from effecting each other
+= Hazard damage decreased: Too high a value seems to prevent other species from starting.
+= Meat-eaters only give 25% of meat value, down from 50%
+= Changed stim to only activate at values over 0.5
+= Right-click menu has new options:
+  *Reset Config: forces config file to be rewritten with default values
+  *Spawn Frugivores: added obvious missing function
+  *Toggle Closed: not sure why I removed it in the first place...
+  =Load and Save world now use GUI from context menu!
+= Selected agent highlighting is now visible at further zooms (gets bigger with scale)
+= Prettied up cout text when starting, resetting, and loading worlds
+= FIXED: Stim report on selected agent display was instead reporting spikiness
+= FIXED: Pressing 'q' to center world while following agents wouldn't stop following agent
+= FIXED: Pressing "tab" no longer resets agents, having a physical button for such an action no longer makes sense
+
+* Graphical glitch with "current population" bar on the graph after the world has been loaded.
+
+
+
 5/25/2016:
 + Added a sun. New layer: light. Sinusoid function over time and x axis, recreates day and night.
   * Bots in night cannot see and see a base 0.5 input in day.

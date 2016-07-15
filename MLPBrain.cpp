@@ -25,7 +25,7 @@ MLPBox::MLPBox()
 	seed= 0;
 	kp= randf(0.01,1);
 	gw= randf(-2,2);
-	bias= randf(-1,1);
+	bias= randf(-3,3);
 
 	out= 0;
 	oldout= 0;
@@ -242,10 +242,12 @@ void MLPBrain::liveMutate(float MR, float MR2, vector<float>& out)
 	if (randf(0,1)<MR/20) {
 		//stimulate box weight
 		float stim= out[Output::STIMULANT];
-		for (int k=0;k<CONNS;k++) {
-			//modify weights based on matching old output and new input, if stimulant is active
-			float val= boxes[abox->id[k]].out;
-			abox->w[k]+= conf::LEARNRATE*stim*(abox->oldout-(1-val));
+		if(stim>0.5){
+			for (int k=0;k<CONNS;k++) {
+				//modify weights based on matching old output and new input, if stimulant is active
+				float val= boxes[abox->id[k]].out;
+				abox->w[k]+= conf::LEARNRATE*stim*(abox->oldout-(1-val));
+			}
 		}
 //		a2.mutations.push_back("weight stimulated\n");
 //		abox->seed= 0;
@@ -284,6 +286,7 @@ MLPBrain MLPBrain::crossover(const MLPBrain& other)
 			newbrain.boxes[i].gw= this->boxes[i].gw;
 			newbrain.boxes[i].kp= this->boxes[i].kp;
 			newbrain.boxes[i].seed= this->boxes[i].seed + 1;
+//			this->boxes[i].seed += 1; //reward the copied box
 			for (int j=0; j<CONNS; j++){
 				newbrain.boxes[i].id[j] = this->boxes[i].id[j];
 				newbrain.boxes[i].w[j] = this->boxes[i].w[j];
@@ -295,6 +298,7 @@ MLPBrain MLPBrain::crossover(const MLPBrain& other)
 			newbrain.boxes[i].gw= other.boxes[i].gw;
 			newbrain.boxes[i].kp= other.boxes[i].kp;
 			newbrain.boxes[i].seed= other.boxes[i].seed + 1;
+//			other.boxes[i].seed += 1;
 			for (int j=0; j<CONNS; j++){
 				newbrain.boxes[i].id[j] = other.boxes[i].id[j];
 				newbrain.boxes[i].w[j] = other.boxes[i].w[j];

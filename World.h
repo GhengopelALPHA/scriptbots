@@ -15,6 +15,8 @@ public:
     void update();
     void reset();
 	void spawn();
+	void readConfig();
+	void writeConfig();
     
     void draw(View* view, int layer);
     
@@ -99,10 +101,87 @@ public:
 	int CW;
 	int CH;
 	float cells[Layer::LAYERS][conf::WIDTH/conf::CZ][conf::HEIGHT/conf::CZ]; //[LAYER][CELL_X][CELL_Y]
+
+		//reloadable "constants"
+	int MINFOOD;
+	float INITFOODDENSITY;
+	int INITFOOD;
+	float INITFRUITDENSITY;
+	int INITFRUIT;
+
+	int NUMBOTS;
+	int ENOUGHBOTS;
+	int TOOMANYBOTS;
+
+	int REPORTS_PER_EPOCH;
+	int FRAMES_PER_EPOCH;
+	int FRAMES_PER_DAY;
+
+	int CONTINENTS;
+	float OCEANPERCENT;
+	float GRAVITYACCEL;
+	float REACTPOWER;
+	float SPIKEMULT;
+	float BOTSPEED;
+	float BOOSTSIZEMULT;
+	float SOUNDPITCHRANGE;
+	float FOODTRANSFER;
+//	float MEANRADIUS;
+	float SPIKESPEED;
+	int FRESHKILLTIME;
+	int TENDERAGE;
+	float MINMOMHEALTH;
+//	float REPRATE;
+//	float LEARNRATE;
+	float MAXDEVIATION;
+	int MAXAGE;
+
+	float DIST;
+	float SPIKELENGTH;
+	float TOOCLOSE;
+	float FOOD_SHARING_DISTANCE;
+	float SEXTING_DISTANCE;
+	float GRABBING_DISTANCE;
+
+	float HEALTHLOSS_WHEELS;
+	float HEALTHLOSS_BOOSTMULT;
+	float HEALTHLOSS_BADTEMP;
+	float HEALTHLOSS_AGING;
+	float HEALTHLOSS_BRAINUSE;
+	float HEALTHLOSS_BUMP;
+	float HEALTHLOSS_SPIKE_EXT;
+	float HEALTHLOSS_BADAIR;
+	float HEALTHLOSS_NOOXYGEN;
+	float HEALTHLOSS_ASSEX;
+	float HEALTHLOSS_JAWSNAP;
+
+	float FOODINTAKE;
+	float FOODDECAY;
+	float FOODGROWTH;
+	float FOODWASTE;
+	int FOODADDFREQ;
+	float FOODSPREAD;
+	int FOODRANGE;
+
+	float FRUITINTAKE;
+	float FRUITDECAY;
+	float FRUITWASTE;
+	int FRUITADDFREQ;
+	float FRUITREQUIRE;
+
+	float MEATINTAKE;
+	float MEATDECAY;
+	float MEATWASTE;
+	float MEATVALUE;
+
+	int HAZARDFREQ;
+	float HAZARDDECAY;
+	float HAZARDDEPOSIT;
+	float HAZARDDAMAGE;
     
 private:
     void writeReport();
-    
+	    
     void reproduce(int ai, int bi);
 
 	void cellsRandomFill(int layer, float amount, int number);

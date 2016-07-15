@@ -197,11 +197,7 @@ void GLView::menu(int key)
 	ReadWrite* savehelper= new ReadWrite(); //for loading/saving
 	if (key == 27) //[esc] quit
 		exit(0);
-	else if (key==9) { //[tab] reset
-		world->reset();
-		world->spawn();
-		printf("World reset\n");
-	} else if (key=='p') {
+	else if (key=='p') {
 		//pause
 		live_paused= !live_paused;
 	} else if (key=='m') { //drawing
@@ -219,13 +215,15 @@ void GLView::menu(int key)
 		if (key=='x') live_agentsvis++;
 		else live_agentsvis--;
 		if (live_agentsvis>Visual::VISUALS-1) live_agentsvis= Visual::NONE;
-		if (live_agentsvis<Visual::NONE) live_agentsvis= Visual::VISUALS-1; //5 here and above because there are 6 options (0,1,2,3,4,5)
-	} else if (key==1002) { //add agents
+		if (live_agentsvis<Visual::NONE) live_agentsvis= Visual::VISUALS-1;
+	} else if (key==1001) { //add agents
 		world->addAgents(5);
+	} else if (key==1002) { //add Herbivore agents
+		world->addAgents(5, Stomach::PLANT);
 	} else if (key==1003) { //add Carnivore agents
 		world->addAgents(5, Stomach::MEAT);
-	} else if (key==1004) { //add Herbivore agents
-		world->addAgents(5, Stomach::PLANT);
+	} else if (key==1004) { //add Frugivore agents
+		world->addAgents(5, Stomach::FRUIT);
 	} else if (key=='c') {
 		world->setClosed( !world->isClosed() );
 		live_worldclosed= (int) world->isClosed();
@@ -234,8 +232,7 @@ void GLView::menu(int key)
 		else glutChangeToMenuEntry(4, "Close World", 'c');
 		glutSetMenu(m_id);*/
 	} else if (key=='f') {
-		if(live_follow==0) live_follow= 1; //toggle follow selected agent
-		else live_follow= 0;
+		live_follow= !live_follow; //toggle follow selected agent
 	} else if(key=='o') {
 		if(live_selection!=Select::OLDEST) live_selection= Select::OLDEST; //follow oldest agent
 		else live_selection= Select::NONE;
@@ -247,6 +244,7 @@ void GLView::menu(int key)
 		else scalemult= scaleA;
 		xtranslate= -(conf::WIDTH-2020)/2;
 		ytranslate= -(conf::HEIGHT-80)/2;
+		live_follow= 0;
 	} else if(key=='g') {
 		if(live_selection!=Select::BEST_GEN) live_selection= Select::BEST_GEN; //follow most advanced generation agent
 		else live_selection= Select::NONE;
@@ -262,7 +260,7 @@ void GLView::menu(int key)
 		if(scalemult<0.01) scalemult=0.01;
 	}else if (key==32) { //spacebar input [pressed]
 		world->pinput1= 1;
-	}else if (key=='/') { // / (heal selected)
+	}else if (key=='/') { // / heal selected
 		world->selectedHeal();
 	}else if (key=='|') { // | reproduce selected
 		world->selectedBabys();
@@ -285,8 +283,8 @@ void GLView::menu(int key)
 	} else if (key==999) { //player control
 		world->setControl(!world->pcontrol);
 		glutGet(GLUT_MENU_NUM_ITEMS);
-		if (world->pcontrol) glutChangeToMenuEntry(5, "Release Agent", 999);
-		else glutChangeToMenuEntry(5, "Control Agent", 999);
+		if (world->pcontrol) glutChangeToMenuEntry(1, "Release Agent", 999);
+		else glutChangeToMenuEntry(1, "Control Selected (w,a,s,d)", 999);
 		glutSetMenu(m_id);
 	}else if (key==1005) { //menu only, debug mode
 		world->setDebug( !world->isDebug() );
@@ -297,6 +295,16 @@ void GLView::menu(int key)
 			printf("Entered Debug Mode\n");
 		} else glutChangeToMenuEntry(18, "Enter Debug Mode", 1005);
 		glutSetMenu(m_id);*/
+	}else if (key==1006) { //force-reset config
+		world->writeConfig();
+	}else if (key==1007) { // reset
+		world->reset();
+		world->spawn();
+		printf("WORLD RESET!\n");
+	} else if (key==1008) { //save world
+		handleRW(2);
+	} else if (key==1009) { //load world
+		handleRW(1);
 	} else if (world->isDebug()) {
 		printf("Unknown key pressed: %i\n", key);
 	}
@@ -320,17 +328,20 @@ void GLView::glCreateMenu()
 {
 	m_id = glutCreateMenu(gl_menu); //right-click context menu
 	glutAddMenuEntry("Control Selected (w,a,s,d)", 999); //line contains mode-specific text, see menu function above
-	glutAddMenuEntry("-------------------",-1);
-	glutAddMenuEntry("Spawn Agents", 1002);
-	glutAddMenuEntry("Spawn Herbivores", 1004);
-	glutAddMenuEntry("Spawn Carnivores", 1003);
 	glutAddMenuEntry("Heal Agent (/)", '/');
 	glutAddMenuEntry("Delete Agent (del)", 127);
-	glutAddMenuEntry("Save World",1000);
-	glutAddMenuEntry("Load World",1001);
 	glutAddMenuEntry("-------------------",-1);
-	glutAddMenuEntry("Enter Debug Mode", 1005); //line contains mode-specific text, see menu function above
-	glutAddMenuEntry("Reset Agents (tab)", 9);
+	glutAddMenuEntry("Spawn Agents", 1001);
+	glutAddMenuEntry("Spawn Herbivores", 1002);
+	glutAddMenuEntry("Spawn Carnivores", 1003);
+	glutAddMenuEntry("Spawn Frugivores", 1004);
+	glutAddMenuEntry("Toggle Closed", 'c');
+	glutAddMenuEntry("Save World",1008);
+	glutAddMenuEntry("-------------------",-1);
+	glutAddMenuEntry("Load World",1009);
+	glutAddMenuEntry("Enter Debug Mode", 1005);
+	glutAddMenuEntry("Reset Agents", 1007);
+	glutAddMenuEntry("Reset Config", 1006);
 	glutAddMenuEntry("Exit (esc)", 27);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -369,6 +380,7 @@ void GLView::gluiCreateMenu()
 	new GLUI_StaticText(rollout_vis,"Layer");
 	new GLUI_RadioButton(group_layers,"off");
 	for(int i=0; i<Layer::LAYERS; i++){
+		//this code allows the layers to be defined in any order, but displayed as below
 		char text[16]= "";
 		if(i==Layer::PLANTS) strcpy(text, "Plant");
 		else if(i==Layer::MEATS) strcpy(text, "Meat");
@@ -490,7 +502,7 @@ void GLView::handleCloses(int action) //GLUI callback for handling window closin
 	} else if (action==3){ //resetting
 		world->reset();
 		world->spawn();
-		printf("World reset\n");
+		printf("WORLD RESET!\n");
 		Alert->hide();
 	} else if (action==4){ //Alert cancel/continue
 		Alert->hide();
@@ -612,7 +624,7 @@ void GLView::handleIdle()
 	if (!live_paused) world->update();
 
 	//autosave world periodically, based on world time
-	if (live_autosave==1 && world->modcounter%(conf::FRAMES_PER_EPOCH)==0) trySaveWorld(true);
+	if (live_autosave==1 && world->modcounter%(world->FRAMES_PER_EPOCH)==0) trySaveWorld(true);
 
 	//show FPS and other stuff
 	int currentTime = glutGet( GLUT_ELAPSED_TIME );
@@ -724,12 +736,14 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 
 			if(world->getSelectedAgent()>=0){
 				float deviation= abs(agent.species - world->agents[world->getSelectedAgent()].species); //species deviation check
-				if (deviation==0) {
+				if (deviation==0) { //exact copies
 					red= 0.2;
-				} else if (deviation<=conf::MAXDEVIATION) {
+				} else if (deviation<=world->MAXDEVIATION) {
+					//reproducable relatives
 					red= 0;
 					gre= 0;
-				} else if (deviation<=2*conf::MAXDEVIATION) {
+				} else if (deviation<=3*world->MAXDEVIATION) {
+					//un-reproducable relatives
 					red= 0.6;
 					gre= 0.4;
 				}
@@ -746,7 +760,7 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 			//draw selection
 			glBegin(GL_POLYGON);
 			glColor3f(1,1,1);
-			drawCircle(x, y, agent.radius+5);
+			drawCircle(x, y, agent.radius+3/scalemult);
 			glEnd();
 
 			if(scalemult > .2){
@@ -841,9 +855,9 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 					for (int k=0;k<17;k++)
 					{
 						n = k*(M_PI/8);
-						glVertex3f(x+conf::DIST*sin(n),y+conf::DIST*cos(n),0);
+						glVertex3f(x+world->DIST*sin(n),y+world->DIST*cos(n),0);
 						n = (k+1)*(M_PI/8);
-						glVertex3f(x+conf::DIST*sin(n),y+conf::DIST*cos(n),0);
+						glVertex3f(x+world->DIST*sin(n),y+world->DIST*cos(n),0);
 					}
 					glEnd();
 
@@ -851,25 +865,25 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 					glBegin(GL_POLYGON);
 					glColor4f(1,0,0,0.35);
 					glVertex3f(x,y,0);
-					glVertex3f(x+(r+agent.spikeLength*conf::SPIKELENGTH)*cos(agent.angle+M_PI/8),
-							   y+(r+agent.spikeLength*conf::SPIKELENGTH)*sin(agent.angle+M_PI/8),0);
-					glVertex3f(x+(r+agent.spikeLength*conf::SPIKELENGTH)*cos(agent.angle),
-							   y+(r+agent.spikeLength*conf::SPIKELENGTH)*sin(agent.angle),0);
-					glVertex3f(x+(r+agent.spikeLength*conf::SPIKELENGTH)*cos(agent.angle-M_PI/8),
-							   y+(r+agent.spikeLength*conf::SPIKELENGTH)*sin(agent.angle-M_PI/8),0);
+					glVertex3f(x+(r+agent.spikeLength*world->SPIKELENGTH)*cos(agent.angle+M_PI/8),
+							   y+(r+agent.spikeLength*world->SPIKELENGTH)*sin(agent.angle+M_PI/8),0);
+					glVertex3f(x+(r+agent.spikeLength*world->SPIKELENGTH)*cos(agent.angle),
+							   y+(r+agent.spikeLength*world->SPIKELENGTH)*sin(agent.angle),0);
+					glVertex3f(x+(r+agent.spikeLength*world->SPIKELENGTH)*cos(agent.angle-M_PI/8),
+							   y+(r+agent.spikeLength*world->SPIKELENGTH)*sin(agent.angle-M_PI/8),0);
 					glVertex3f(x,y,0);
 					glEnd();
 
 					//grab is currently a range-only thing, change?
 					glBegin(GL_POLYGON);
 					glColor4f(0,1,1,0.15);
-					drawCircle(x,y,r+conf::GRABBING_DISTANCE);
+					drawCircle(x,y,r+world->GRABBING_DISTANCE);
 					glEnd();
 
 					//health-sharing
 					glBegin(GL_POLYGON);
 					glColor4f(0,0.5,0,0.25);
-					drawCircle(x,y,r+conf::FOOD_SHARING_DISTANCE);
+					drawCircle(x,y,r+world->FOOD_SHARING_DISTANCE);
 					glEnd();
 
 				} else glPopMatrix();
@@ -926,7 +940,7 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 		//draw giving/receiving
 		if(agent.dfood!=0){
 			glBegin(GL_POLYGON);
-			float mag=cap(abs(agent.dfood)/conf::FOODTRANSFER/3);
+			float mag=cap(abs(agent.dfood)/world->FOODTRANSFER/3);
 			if(agent.dfood>0) glColor3f(0,mag,0);
 			else glColor3f(mag,0,0); //draw sharing as a thick green or red outline
 			for (int k=0;k<17;k++){
@@ -981,9 +995,9 @@ void GLView::drawAgent(const Agent& agent, float x, float y, bool ghost)
 				float mult= agent.grabID==-1 ? 1 : 0;
 				float aa= agent.angle+M_PI/8*mult;
 				float ab= agent.angle-M_PI/8*mult;
-				glVertex3f(x+(conf::GRABBING_DISTANCE+r)*cos(aa), y+(conf::GRABBING_DISTANCE+r)*sin(aa), 0);
+				glVertex3f(x+(world->GRABBING_DISTANCE+r)*cos(aa), y+(world->GRABBING_DISTANCE+r)*sin(aa), 0);
 				glVertex3f(x,y,0);
-				glVertex3f(x+(conf::GRABBING_DISTANCE+r)*cos(ab), y+(conf::GRABBING_DISTANCE+r)*sin(ab), 0);
+				glVertex3f(x+(world->GRABBING_DISTANCE+r)*cos(ab), y+(world->GRABBING_DISTANCE+r)*sin(ab), 0);
 				glEnd();
 				glLineWidth(1);
 
@@ -998,9 +1012,9 @@ glLineWidth(2);
 				else {
 					float aa= agent.angle+M_PI/8;
 					float ab= agent.angle-M_PI/8;
-					glVertex3f(x+(conf::GRABBING_DISTANCE+r)*cos(aa), y+(conf::GRABBING_DISTANCE+r)*sin(aa), 0);
+					glVertex3f(x+(world->GRABBING_DISTANCE+r)*cos(aa), y+(world->GRABBING_DISTANCE+r)*sin(aa), 0);
 					glVertex3f(x,y,0);
-					glVertex3f(x+(conf::GRABBING_DISTANCE+r)*cos(ab), y+(conf::GRABBING_DISTANCE+r)*sin(ab), 0);
+					glVertex3f(x+(world->GRABBING_DISTANCE+r)*cos(ab), y+(world->GRABBING_DISTANCE+r)*sin(ab), 0);
 				}
 				glEnd();
 				glLineWidth(1);
@@ -1054,9 +1068,9 @@ glLineWidth(2);
 			float volume= agent.volume;
 			float count= agent.tone*11+1;
 			for (int l=0; l<=(int)count; l++){
-				float dist= conf::DIST*(l/count)+4*(world->modcounter%(int)((conf::DIST)/4));
-				if (dist>conf::DIST) dist-= conf::DIST;
-				glColor4f((1-agent.tone)*(1-agent.tone), 1-fabs(agent.tone-0.5)*2, agent.tone*agent.tone, cap((1-dist/conf::DIST)*sqrtf(volume)));
+				float dist= world->DIST*(l/count)+4*(world->modcounter%(int)((world->DIST)/4));
+				if (dist>world->DIST) dist-= world->DIST;
+				glColor4f((1-agent.tone)*(1-agent.tone), 1-fabs(agent.tone-0.5)*2, agent.tone*agent.tone, cap((1-dist/world->DIST)*sqrtf(volume)));
 
 				for (int k=0;k<32;k++)
 				{
@@ -1069,18 +1083,18 @@ glLineWidth(2);
 		}
 
 		//and spike, if harmful
-		if ((scalemult > .08 || ghost) && agent.spikeLength*conf::SPIKELENGTH>r) {
+		if ((scalemult > .08 || ghost) && agent.spikeLength*world->SPIKELENGTH>r) {
 			//dont render spike if zoomed too far out, but always render it on ghosts, and only if it's capable of hurting
 			glColor4f(0.7,0,0,blur);
 			glVertex3f(x,y,0);
-			glVertex3f(x+(conf::SPIKELENGTH*agent.spikeLength)*cos(agent.angle),
-					   y+(conf::SPIKELENGTH*agent.spikeLength)*sin(agent.angle),
+			glVertex3f(x+(world->SPIKELENGTH*agent.spikeLength)*cos(agent.angle),
+					   y+(world->SPIKELENGTH*agent.spikeLength)*sin(agent.angle),
 					   0);
 		}
 		glEnd();
 
 		//some final debug stuff that is shown even on ghosts:
-		if(world->isDebug()){
+		if(world->isDebug() || ghost){
 			//wheels and wheel speeds
 			float wheelangle= agent.angle+ M_PI/2;
 			glBegin(GL_LINES);
@@ -1125,10 +1139,10 @@ glLineWidth(2);
 						int scx= (int) (agent.pos.x/conf::CZ);
 						int scy= (int) (agent.pos.y/conf::CZ);
 
-						minx= (scx-conf::DIST/conf::CZ) > 0 ? (scx-conf::DIST/conf::CZ)*conf::CZ : 0;
-						maxx= (scx+1+conf::DIST/conf::CZ) < conf::WIDTH/conf::CZ ? (scx+1+conf::DIST/conf::CZ)*conf::CZ : conf::WIDTH;
-						miny= (scy-conf::DIST/conf::CZ) > 0 ? (scy-conf::DIST/conf::CZ)*conf::CZ : 0;
-						maxy= (scy+1+conf::DIST/conf::CZ) < conf::HEIGHT/conf::CZ ? (scy+1+conf::DIST/conf::CZ)*conf::CZ : conf::HEIGHT;
+						minx= (scx-world->DIST/conf::CZ/2) > 0 ? (scx-world->DIST/conf::CZ/2)*conf::CZ : 0;
+						maxx= (scx+1+world->DIST/conf::CZ/2) < conf::WIDTH/conf::CZ ? (scx+1+world->DIST/conf::CZ/2)*conf::CZ : conf::WIDTH;
+						miny= (scy-world->DIST/conf::CZ/2) > 0 ? (scy-world->DIST/conf::CZ/2)*conf::CZ : 0;
+						maxy= (scy+1+world->DIST/conf::CZ/2) < conf::HEIGHT/conf::CZ ? (scy+1+world->DIST/conf::CZ/2)*conf::CZ : conf::HEIGHT;
 
 						glBegin(GL_LINES);
 						glColor3f(0,1,0);
@@ -1208,7 +1222,7 @@ glLineWidth(2);
 
 				//age
 				sprintf(buf2, "%i", agent.age);
-				float red = cap((float) agent.age/conf::MAXAGE); //will be redder the closer it is to MAXAGE
+				float red = cap((float) agent.age/world->MAXAGE); //will be redder the closer it is to MAXAGE
 				RenderString(x-rp*1.414, y+rp*1.414+12, GLUT_BITMAP_HELVETICA_12, buf2, 0.8f, 1.0-red, 1.0-red);
 
 				//health
@@ -1457,9 +1471,9 @@ void GLView::drawStatic()
 					 buf, 0.8f, 1.0f, 1.0f);
 
 		//Spike
-		if(selected.spikeLength*conf::SPIKELENGTH>=selected.radius){
+		if(selected.spikeLength*world->SPIKELENGTH>=selected.radius){
 			float mw= fabs(selected.w1)>fabs(selected.w2) ? fabs(selected.w1) : fabs(selected.w2);
-			float val= conf::SPIKEMULT*selected.spikeLength*mw;
+			float val= world->SPIKEMULT*selected.spikeLength*mw;
 			sprintf(buf, "Spikey(DMG%.2f)", val);
 		} else sprintf(buf, "Not Spikey");
 		RenderString(glutGet(GLUT_WINDOW_WIDTH)-100,
@@ -1473,7 +1487,7 @@ void GLView::drawStatic()
 					 buf, 0.8f, 1.0f, 1.0f);
 
 		//Stats: Stimulated
-		if(selected.spikeLength*conf::SPIKELENGTH>=0.5) sprintf(buf, "Stim?");
+		if(selected.out[Output::STIMULANT]>0.5) sprintf(buf, "Stim?");
 		else sprintf(buf, "No Stim?");
 		RenderString(glutGet(GLUT_WINDOW_WIDTH)-200,
 					 100, GLUT_BITMAP_HELVETICA_12,
