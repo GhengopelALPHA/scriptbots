@@ -4,6 +4,7 @@ Project Home: https://sites.google.com/site/scriptbotsevo/home
 
 Extracting the Release.zip file will give the executable and its required libraries. Tested on  
  Windows XP, Windows 7, and Windows 10 machines.
+Also contained in this branch, several different versions of required GLUT and GLUI libraries, provided just in case.
 If you wish to edit the source code, look for the "master" branch on Github
 Once running, the program will generate two folders, "saves" and "saved agents", and a "settings.cfg" file.
 
