@@ -5,9 +5,7 @@
 #include <stdio.h>
 //#include <iostream>
 #include <string>
-#include "DWRAONBrain.h"
 #include "MLPBrain.h"
-#include "AssemblyBrain.h"
 
 using namespace std;
 Agent::Agent()

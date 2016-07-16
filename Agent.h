@@ -1,8 +1,6 @@
 #ifndef AGENT_H
 #define AGENT_H
 
-#include "DWRAONBrain.h"
-#include "AssemblyBrain.h"
 #include "MLPBrain.h"
 #include "vmath.h"
 
